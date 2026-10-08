@@ -50,6 +50,16 @@ Os endereços são exemplos: use o IP real da máquina. Não é necessário conf
 - Ao detectar uma desconexão, o cliente desativa chat e movimento. Após reconectar, tenta entrar com o mesmo perfil e recebe um estado completo. Se o apelido tiver sido ocupado ou a praça estiver cheia, a entrada reaparece com a explicação. Mensagens e destinos não são reenviados automaticamente.
 - Versão para computadores e grupos conhecidos. Contas, moderação para público aberto, celular, banco de dados, lojas, inventário e outras salas ficam fora desta entrega.
 
+## Avisos de atualização no Discord
+
+Cada Release estável publicada neste repositório envia suas notas ao canal do Discord configurado. Pré-lançamentos, pushes e edições posteriores da Release não enviam avisos. Se a descrição da Release estiver vazia, o aviso mostrará a versão e o link, indicando que não há notas.
+
+1. No canal do Discord, crie um webhook em **Editar canal → Integrações → Webhooks** e copie sua URL.
+2. No GitHub, abra **Settings → Secrets and variables → Actions → New repository secret** e salve a URL como `DISCORD_WEBHOOK_URL`. Não coloque a URL em arquivos do projeto.
+3. Publique uma Release estável com uma tag de versão e escreva as notas no campo de descrição. O workflow **Anunciar Release no Discord** enviará o texto ao canal. Notas longas são divididas em várias mensagens.
+
+Para testar o formatador e o envio simulado, sem acessar o Discord, execute `node --test scripts/announce-release.test.mjs`. Para conferir a integração real, publique uma Release estável depois que o workflow estiver na branch principal e verifique a execução em **Actions** e a mensagem no canal.
+
 ## Verificação
 
 ```sh
