@@ -23,8 +23,10 @@ test('envia uma Release estável com notas e sem menções', async () => {
   const payload = JSON.parse(requests[0].body);
   assert.match(payload.content, /v1\.1\.0/);
   assert.match(payload.content, /Novo mapa e correções no chat/);
-  assert.match(payload.content, /https:\/\/github\.com/);
+  assert.match(payload.content, /\[🔗 Ver atualização completa\]\(https:\/\/github\.com\/remix-pc\/frog-community\/releases\/tag\/v1\.1\.0\)/);
+  assert.doesNotMatch(payload.content, /\nhttps:\/\/github\.com/);
   assert.deepEqual(payload.allowed_mentions, { parse: [] });
+  assert.equal(payload.flags, 4);
 });
 
 test('ignora pré-lançamento', async () => {
@@ -37,7 +39,7 @@ test('ignora pré-lançamento', async () => {
 test('Release sem descrição informa ausência de notas', () => {
   const [message] = buildMessages({ ...release, body: '  ' });
   assert.match(message, /não tem notas de atualização/);
-  assert.match(message, /releases\/tag\/v1\.1\.0/);
+  assert.match(message, /\[🔗 Ver atualização completa\]/);
 });
 
 test('notas longas são divididas sem perda de conteúdo', () => {
@@ -45,9 +47,10 @@ test('notas longas são divididas sem perda de conteúdo', () => {
   const messages = buildMessages({ ...release, body });
   assert.ok(messages.length > 1);
   assert.ok(messages.every((message) => message.length <= 2000));
-  const header = `🐸 **Frog Community — ${release.name}**\nVersão: \`${release.tag_name}\`\n${release.html_url}\n\n`;
-  const continuation = `🐸 **Frog Community — ${release.tag_name} (continuação)**\n`;
-  const reconstructed = messages.map((message, index) => message.slice(index ? continuation.length : header.length)).join('');
+  const header = `# 🐸 Frog Community\n## ${release.name}\n\n**Versão:** \`${release.tag_name}\`\n\n### 📋 Notas da atualização\n`;
+  const continuation = '# 🐸 Frog Community\n### 📋 Notas da atualização — continuação\n';
+  const footer = `\n\n---\n[🔗 Ver atualização completa](${release.html_url})`;
+  const reconstructed = messages.map((message, index) => message.slice(index ? continuation.length : header.length, -footer.length)).join('');
   assert.equal(reconstructed, body);
 });
 
@@ -56,9 +59,10 @@ test('divide texto com emojis sem ultrapassar o limite do Discord', () => {
   const messages = buildMessages({ ...release, body });
   assert.ok(messages.length > 1);
   assert.ok(messages.every((message) => message.length <= 2000));
-  const header = `🐸 **Frog Community — ${release.name}**\nVersão: \`${release.tag_name}\`\n${release.html_url}\n\n`;
-  const continuation = `🐸 **Frog Community — ${release.tag_name} (continuação)**\n`;
-  assert.equal(messages.map((message, index) => message.slice(index ? continuation.length : header.length)).join(''), body);
+  const header = `# 🐸 Frog Community\n## ${release.name}\n\n**Versão:** \`${release.tag_name}\`\n\n### 📋 Notas da atualização\n`;
+  const continuation = '# 🐸 Frog Community\n### 📋 Notas da atualização — continuação\n';
+  const footer = `\n\n---\n[🔗 Ver atualização completa](${release.html_url})`;
+  assert.equal(messages.map((message, index) => message.slice(index ? continuation.length : header.length, -footer.length)).join(''), body);
 });
 
 test('falha quando o Discord rejeita a mensagem', async () => {

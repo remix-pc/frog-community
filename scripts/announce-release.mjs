@@ -32,18 +32,22 @@ export function buildMessages(release) {
   const url = String(release.html_url || '').trim();
   if (!tag || !url) throw new Error('A Release precisa de tag_name e html_url.');
 
-  const header = `🐸 **Frog Community — ${title}**\nVersão: \`${tag}\`\n${url}\n\n`;
+  const header = `# 🐸 Frog Community\n## ${title}\n\n**Versão:** \`${tag}\`\n\n### 📋 Notas da atualização\n`;
+  const continuation = `# 🐸 Frog Community\n### 📋 Notas da atualização — continuação\n`;
+  const footer = `\n\n---\n[🔗 Ver atualização completa](${url})`;
   const body = String(release.body || '');
   const notes = body.trim() ? body : '_Esta versão não tem notas de atualização._';
-  const firstLimit = DISCORD_LIMIT - header.length;
+  const firstLimit = DISCORD_LIMIT - header.length - footer.length;
   if (firstLimit < 1) throw new Error('O cabeçalho da Release excede o limite do Discord.');
 
   const [first, ...rest] = splitText(notes, firstLimit);
-  const continuation = `🐸 **Frog Community — ${tag} (continuação)**\n`;
-  const laterLimit = DISCORD_LIMIT - continuation.length;
+  const laterLimit = DISCORD_LIMIT - continuation.length - footer.length;
   if (laterLimit < 1) throw new Error('A tag da Release excede o limite do Discord.');
 
-  return [header + first, ...rest.flatMap((part) => splitText(part, laterLimit).map((chunk) => continuation + chunk))];
+  return [
+    header + first + footer,
+    ...rest.flatMap((part) => splitText(part, laterLimit).map((chunk) => continuation + chunk + footer)),
+  ];
 }
 
 export async function announceRelease(event, webhookUrl, fetchImpl = fetch) {
@@ -59,7 +63,11 @@ export async function announceRelease(event, webhookUrl, fetchImpl = fetch) {
     const response = await fetchImpl(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+      body: JSON.stringify({
+        content,
+        allowed_mentions: { parse: [] },
+        flags: 4,
+      }),
     });
     if (!response.ok) throw new Error(`Discord recusou o aviso (HTTP ${response.status}).`);
   }
