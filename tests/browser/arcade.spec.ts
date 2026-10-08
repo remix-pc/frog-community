@@ -35,7 +35,7 @@ async function walk(page: Page, x: number, y: number) {
   await canvas.click({ position: { x: x / 1200 * box.width, y: y / 800 * box.height } });
 }
 async function open(page: Page) {
-  await walk(page, 650, 410);
+  await walk(page, 650, 220);
   await expect(page.locator('#arcade-invite')).toBeVisible();
   await page.getByRole('button', { name: 'Jogar', exact: true }).click();
   await expect(page.locator('#arcade-dialog')).toBeVisible();
@@ -55,7 +55,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
     adapter.broadcast = (packet, options) => { if (packet.data?.[0] !== 'arcade:ranking') broadcast(packet, options); };
     const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize(viewport); await enter(page, arcadeGame.url, 'Saltador');
-    await walk(page, 650, 410); await expect(page.locator('#arcade-invite')).toBeVisible();
+    await walk(page, 650, 220); await expect(page.locator('#arcade-invite')).toBeVisible();
     await page.screenshot({ path: info.outputPath(`fliperama-no-brejo-${viewport.width}.png`) });
     await page.getByRole('button', { name: 'Agora não' }).click(); await expect(page.locator('#arcade-invite')).toBeHidden();
     await page.waitForTimeout(500); await expect(page.locator('#arcade-invite')).toBeHidden();
