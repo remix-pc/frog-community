@@ -36,7 +36,11 @@ export class PlazaScene extends Phaser.Scene {
     this.destination = this.add.circle(0, 0, 10).setStrokeStyle(2, 0x54744b).setVisible(false);
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.enabled || pointer.rightButtonDown()) return;
-      const point = { x: pointer.worldX, y: pointer.worldY };
+      const clicked = { x: pointer.worldX, y: pointer.worldY };
+      // The cabinet is an obstacle. Clicking its art should lead to the playable side.
+      const cabinetClicked = Math.abs(clicked.x - ARCADE.x) <= 60 &&
+        clicked.y >= ARCADE.y - 158 && clicked.y <= ARCADE.y + 12;
+      const point = cabinetClicked ? ARCADE.interaction : clicked;
       if (!isWalkable(point)) { this.onInvalid(); return; }
       this.onMove(point);
       this.destination!.setPosition(point.x, point.y).setVisible(true).setAlpha(1).setScale(0.5);
