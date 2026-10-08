@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const DISCORD_LIMIT = 2000;
+const SITE_URL = 'https://frog-community.onrender.com/';
 
 function splitText(text, limit) {
   const chunks = [];
@@ -34,7 +35,7 @@ export function buildMessages(release) {
 
   const header = `# 🐸 Frog Community\n## ${title}\n\n**Versão:** \`${tag}\`\n\n### 📋 Notas da atualização\n`;
   const continuation = `# 🐸 Frog Community\n### 📋 Notas da atualização — continuação\n`;
-  const footer = `\n\n---\n[🔗 Ver atualização completa](${url})`;
+  const footer = `\n\n---\n[🌐 Jogar agora](${SITE_URL}) • [🔗 Ver atualização completa](${url})`;
   const body = String(release.body || '');
   const notes = body.trim() ? body : '_Esta versão não tem notas de atualização._';
   const firstLimit = DISCORD_LIMIT - header.length - footer.length;

@@ -23,6 +23,7 @@ test('envia uma Release estável com notas e sem menções', async () => {
   const payload = JSON.parse(requests[0].body);
   assert.match(payload.content, /v1\.1\.0/);
   assert.match(payload.content, /Novo mapa e correções no chat/);
+  assert.match(payload.content, /\[🌐 Jogar agora\]\(https:\/\/frog-community\.onrender\.com\/\)/);
   assert.match(payload.content, /\[🔗 Ver atualização completa\]\(https:\/\/github\.com\/remix-pc\/frog-community\/releases\/tag\/v1\.1\.0\)/);
   assert.doesNotMatch(payload.content, /\nhttps:\/\/github\.com/);
   assert.deepEqual(payload.allowed_mentions, { parse: [] });
@@ -49,7 +50,7 @@ test('notas longas são divididas sem perda de conteúdo', () => {
   assert.ok(messages.every((message) => message.length <= 2000));
   const header = `# 🐸 Frog Community\n## ${release.name}\n\n**Versão:** \`${release.tag_name}\`\n\n### 📋 Notas da atualização\n`;
   const continuation = '# 🐸 Frog Community\n### 📋 Notas da atualização — continuação\n';
-  const footer = `\n\n---\n[🔗 Ver atualização completa](${release.html_url})`;
+  const footer = `\n\n---\n[🌐 Jogar agora](https://frog-community.onrender.com/) • [🔗 Ver atualização completa](${release.html_url})`;
   const reconstructed = messages.map((message, index) => message.slice(index ? continuation.length : header.length, -footer.length)).join('');
   assert.equal(reconstructed, body);
 });
@@ -61,7 +62,7 @@ test('divide texto com emojis sem ultrapassar o limite do Discord', () => {
   assert.ok(messages.every((message) => message.length <= 2000));
   const header = `# 🐸 Frog Community\n## ${release.name}\n\n**Versão:** \`${release.tag_name}\`\n\n### 📋 Notas da atualização\n`;
   const continuation = '# 🐸 Frog Community\n### 📋 Notas da atualização — continuação\n';
-  const footer = `\n\n---\n[🔗 Ver atualização completa](${release.html_url})`;
+  const footer = `\n\n---\n[🌐 Jogar agora](https://frog-community.onrender.com/) • [🔗 Ver atualização completa](${release.html_url})`;
   assert.equal(messages.map((message, index) => message.slice(index ? continuation.length : header.length, -footer.length)).join(''), body);
 });
 
