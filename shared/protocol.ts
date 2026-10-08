@@ -1,3 +1,4 @@
+import type { ArcadeJump, ArcadeRanking, ArcadeState } from './arcade.js';
 export const COLORS = [
   { name: 'Folha', hex: '#80b85c' }, { name: 'Menta', hex: '#65b79b' },
   { name: 'Lago', hex: '#66b6cd' }, { name: 'Lavanda', hex: '#aa91c9' },
@@ -11,12 +12,18 @@ export type ChatMessage = { id: string; playerId: string; nickname: string; colo
 export type WorldState = { players: Player[]; messages: ChatMessage[] };
 export type Reply<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 export interface ClientEvents {
+  'arcade:start': (reply: (result: Reply<ArcadeState>) => void) => void;
+  'arcade:jump': (jump: ArcadeJump, reply: (result: Reply<ArcadeState>) => void) => void;
+  'arcade:leave': () => void;
+  'arcade:ranking': (reply: (result: Reply<ArcadeRanking>) => void) => void;
   'player:join': (profile: Profile, reply: (result: Reply<{ selfId: string; state: WorldState }>) => void) => void;
   'player:move': (destination: Point) => void;
   'chat:send': (text: string, reply: (result: Reply) => void) => void;
   'player:leave': () => void;
 }
 export interface ServerEvents {
+  'arcade:state': (state: ArcadeState) => void;
+  'arcade:ranking': (ranking: ArcadeRanking) => void;
   'world:positions': (players: Player[]) => void;
   'player:joined': (player: Player) => void;
   'player:left': (id: string) => void;

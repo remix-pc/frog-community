@@ -27,6 +27,27 @@ export function treeSvg(): string {
     <path d="M49 78Q50 57 70 58M93 48Q110 34 121 53" fill="none" stroke="#a5c47d" stroke-width="7" stroke-linecap="round"/>
     <circle cx="132" cy="130" r="5" fill="#c1d185"/><circle cx="45" cy="132" r="4" fill="#c1d185"/>`);
 }
+export function arcadeSvg(): string {
+  return svg(120, 170, `<ellipse cx="60" cy="157" rx="55" ry="11" fill="#456a44" opacity=".22"/>
+    <g stroke="#365b44" stroke-width="3" stroke-linejoin="round">
+      <path d="M18 12H94L106 35V145L93 157H22L14 146V101L24 77Z" fill="#75995e"/>
+      <path d="M94 12L106 35V145L93 157V99L83 78Z" fill="#547a4e"/>
+      <path d="M18 12H94L91 39H20Z" fill="#f3d884"/>
+      <path d="M26 46H84L80 91H23Z" fill="#d0dbae"/>
+      <path d="M32 51H78L75 83H30Z" fill="#294b44"/>
+      <path d="M23 91H80L94 108H15Z" fill="#c4d695"/>
+      <path d="M15 108H94L93 153H22Z" fill="#8ead6d"/>
+      <path d="M39 100V89" stroke="#365b44"/><circle cx="39" cy="88" r="5" fill="#e5a265"/>
+      <ellipse cx="65" cy="99" rx="5" ry="3" fill="#f3d884"/><ellipse cx="79" cy="101" rx="5" ry="3" fill="#d9898b"/>
+      <rect x="46" y="119" width="21" height="13" rx="3" fill="#365b44"/>
+      <path d="M52 125H61" stroke="#f3d884"/>
+    </g>
+    <text x="56" y="25" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="9" font-weight="bold" fill="#365b44">PULO DO SAPO</text>
+    <text x="56" y="35" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="6" fill="#547a4e">FLIPERAMA DO BREJO</text>
+    <ellipse cx="53" cy="76" rx="15" ry="4" fill="#80b85c"/>
+    <path d="M43 70Q40 58 48 60Q53 55 58 60Q66 58 63 70Z" fill="#c4d695"/>
+    <circle cx="48" cy="62" r="2" fill="#fffbea"/><circle cx="58" cy="62" r="2" fill="#fffbea"/>`);
+}
 export function groundSvg(): string {
   let details = '';
   // Deterministic handmade scenery, no external assets or fonts.

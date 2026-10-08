@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { COLORS, type Player, type Point } from '../shared/protocol';
 import { isWalkable, TREES, WORLD } from '../shared/world';
-import { dataSvg, frogSvg, groundSvg, treeSvg } from './art';
+import { arcadeSvg, dataSvg, frogSvg, groundSvg, treeSvg } from './art';
+import { ARCADE } from '../shared/arcade';
 
 type Avatar = { root: Phaser.GameObjects.Container; sprite: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text; target: Player; phase: number };
 export class PlazaScene extends Phaser.Scene {
@@ -17,12 +18,14 @@ export class PlazaScene extends Phaser.Scene {
   onInvalid: () => void = () => {};
   constructor() { super('plaza'); }
   preload() {
+    this.load.svg('arcade', dataSvg(arcadeSvg()));
     this.load.svg('ground', dataSvg(groundSvg()));
     this.load.svg('tree', dataSvg(treeSvg()));
     COLORS.forEach(c => this.load.svg(c.hex, dataSvg(frogSvg(c.hex))));
   }
   create() {
     this.add.image(0, 0, 'ground').setOrigin(0);
+    this.add.image(ARCADE.x, ARCADE.y + 12, 'arcade').setOrigin(0.5, 1).setDepth(ARCADE.y);
     TREES.forEach(t => this.add.image(t.x, t.y + 17 * t.scale, 'tree').setOrigin(0.5, 1).setScale(t.scale).setDepth(t.y));
     // Subtle glints drift across the pond; everything remains readable at rest.
     for (let i = 0; i < 7; i++) {

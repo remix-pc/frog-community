@@ -2,6 +2,7 @@ import { io, type Socket } from 'socket.io-client';
 import { COLORS, parseProfile, type ChatMessage, type ClientEvents, type Player, type Profile, type ServerEvents } from '../shared/protocol';
 import { dataSvg, frogSvg } from './art';
 import { createPlaza } from './scene';
+import { ArcadeUI } from './arcade';
 import './style.css';
 import './game-chat.css';
 
@@ -57,6 +58,7 @@ let profile: Profile | null = null, selfId = '', joined = false, joining = false
 let players: Player[] = [], messages: ChatMessage[] = [];
 const muted = new Set<string>();
 let toastTimer: ReturnType<typeof setTimeout>;
+const arcade = new ArcadeUI(socket, controls);
 try { const saved = parseProfile(JSON.parse(localStorage.getItem('frog-profile') || 'null')); if (saved) { el<HTMLInputElement>('nickname').value = saved.nickname; selectedColor = saved.color; } } catch { /* Storage may be unavailable in private browsers. */ }
 function chooseColor(color: string) {
   selectedColor = color;
@@ -73,7 +75,7 @@ function toast(message: string) { el('toast').textContent = message; el('toast')
 function status(text: string, online: boolean) { el('connection-label').textContent = text; document.querySelector('.connection')!.classList.toggle('online', online); }
 function controls() {
   const ready = joined && socket.connected;
-  scene.setEnabled(ready); el<HTMLTextAreaElement>('message-input').disabled = !ready; el<HTMLButtonElement>('send-button').disabled = !ready || sending; el<HTMLButtonElement>('leave-button').disabled = !profile;
+  scene.setEnabled(ready && !arcade.active); el<HTMLTextAreaElement>('message-input').disabled = !ready; el<HTMLButtonElement>('send-button').disabled = !ready || sending; el<HTMLButtonElement>('leave-button').disabled = !profile;
   el<HTMLButtonElement>('join-button').disabled = !socket.connected || joining;
 }
 function renderMessages() {
@@ -141,6 +143,7 @@ function enter(candidate: Profile) {
     }
     profile = candidate; selfId = reply.data.selfId; players = reply.data.state.players; messages = reply.data.state.messages; joined = true;
     scene.setSelf(selfId); scene.setPlayers(players); scene.clearBubbles();
+    arcade.reset();
     el('entry').hidden = true; document.querySelector('.layout')!.removeAttribute('inert');
     el('self-name').textContent = profile.nickname; el('self-detail').textContent = 'De boa na praça'; el<HTMLImageElement>('self-avatar').src = dataSvg(frogSvg(profile.color));
     try { localStorage.setItem('frog-profile', JSON.stringify(profile)); } catch { /* Preferences are optional. */ }
@@ -152,13 +155,14 @@ el('entry-form').addEventListener('submit', event => {
   if (!candidate) { el('entry-error').textContent = 'Use de 3 a 20 letras, números, espaços, _ ou -.'; return; } enter(candidate);
 });
 el('leave-button').onclick = () => {
+  arcade.reset();
   socket.emit('player:leave'); profile = null; selfId = ''; joined = false; players = []; messages = []; muted.clear(); scene.setSelf(''); scene.setPlayers([]); scene.clearBubbles();
   el('entry').hidden = false; document.querySelector('.layout')!.setAttribute('inert', ''); el('self-name').textContent = 'Seu lugar está aqui'; el('self-detail').textContent = 'Escolha um sapo e entre'; el('entry-error').textContent = ''; el<HTMLTextAreaElement>('message-input').value = ''; updateCount(); renderMessages(); renderPeople(); controls(); el('nickname').focus();
 };
 socket.on('connect', () => { status('Conectado ao brejo', true); if (profile) enter(profile); controls(); });
-socket.on('disconnect', () => { joined = false; joining = false; players = []; scene.setPlayers([]); scene.clearBubbles(); renderPeople(); status('Reconectando…', false); controls(); });
+socket.on('disconnect', () => { joined = false; joining = false; arcade.reset(); players = []; scene.setPlayers([]); scene.clearBubbles(); renderPeople(); status('Reconectando…', false); controls(); });
 socket.on('connect_error', () => { status('Tentando conectar…', false); controls(); });
-socket.on('world:positions', current => { if (joined) { players = current; scene.setPlayers(players); } });
+socket.on('world:positions', current => { if (joined) { players = current; scene.setPlayers(players); const self = current.find(p => p.id === selfId); if (self) arcade.update(self); } });
 socket.on('player:joined', player => { if (!joined) return; players = [...players.filter(p => p.id !== player.id), player]; scene.setPlayers(players); renderPeople(); toast(`${player.nickname} deu um pulo na praça.`); });
 socket.on('player:left', id => { players = players.filter(p => p.id !== id); scene.setPlayers(players); renderPeople(); });
 socket.on('chat:message', message => { if (!joined) return; messages.push(message); if (messages.length > 50) messages.shift(); renderMessages(); if (!muted.has(message.playerId)) scene.showBubble(message.playerId, message.text); });
@@ -180,6 +184,7 @@ function sendMessage() {
 el('chat-form').addEventListener('submit', event => { event.preventDefault(); sendMessage(); });
 input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); sendMessage(); } });
 document.addEventListener('keydown', event => {
+  if (arcade.active) return;
   if (event.key === 'Enter' && joined && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement) && !(event.target instanceof HTMLButtonElement)) { event.preventDefault(); openTab(false); input.focus(); }
   if (event.key === 'Escape' && joined) input.blur();
   if (event.key === 'Tab' && !el('entry').hidden) {
