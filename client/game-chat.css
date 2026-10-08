@@ -1,0 +1,87 @@
+/* The conversation is a HUD on top of the world, not a separate page column. */
+.layout {
+  display: flex;
+  gap: 0;
+}
+
+.world-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-chat {
+  position: absolute;
+  z-index: 3;
+  left: 22px;
+  bottom: 22px;
+  width: 326px;
+  border: 1px solid #ffffed99;
+  border-radius: 16px;
+  background: #fbfaf0ed;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px #2c503d1c;
+}
+
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
+  border-bottom: 1px solid #d8e0c6;
+}
+
+.game-chat .tabs {
+  flex: 1;
+  padding: 0 12px;
+  border: 0;
+}
+
+.game-chat .tab { min-height: 43px; font-size: 11px; }
+.game-chat #toggle-chat { font-size: 19px; height: 25px; width: 25px; }
+.game-chat .chat-panel,
+.game-chat .people-panel { height: 154px; }
+.game-chat .people-panel { padding: 8px 15px; }
+.game-chat .people-hint { margin: 0 0 4px; }
+.game-chat .messages { padding: 8px 14px; }
+.game-chat .welcome-note { padding: 10px 12px; margin: 3px 0 10px; }
+.game-chat .welcome-icon { display: none; }
+.game-chat .welcome-note p { margin-top: 4px; }
+.game-chat .message { margin: 9px 0; gap: 7px; }
+.game-chat .message p { font-size: 12px; line-height: 1.45; }
+.game-chat .message-heading strong { font-size: 11px; }
+.game-chat .composer-wrap { padding: 10px 12px 9px; background: #fbfaf0; }
+.game-chat .composer-wrap form { position: relative; padding: 11px 43px 11px 10px; }
+.game-chat textarea { min-height: 20px; max-height: 65px; }
+.game-chat .composer-bottom { margin-top: 3px; }
+.game-chat .composer-bottom button { position: absolute; right: 8px; top: 11px; }
+.game-chat .chat-hint { display: flex; justify-content: center; align-items: center; gap: 5px; font-size: 8px; margin-top: 8px; }
+.game-chat .chat-hint svg { height: 11px; width: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+.world-panel > .self-card {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  min-width: 215px;
+  max-width: 280px;
+  padding: 12px 15px;
+  background: #fbfaecef;
+  border: 1px solid #ffffff70;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #3354330a;
+}
+
+.world-help { left: auto; right: 22px; bottom: 98px; transform: none; }
+.toast { bottom: auto; top: 110px; }
+
+@media (min-width: 1600px) {
+  .game-chat { width: 350px; left: 28px; bottom: 28px; }
+  .game-chat .chat-panel, .game-chat .people-panel { height: 190px; }
+  .game-chat .tab { min-height: 46px; }
+  .game-chat .message p { font-size: 13px; }
+  .world-panel > .self-card { right: 28px; bottom: 28px; }
+  .world-help { right: 28px; bottom: 104px; }
+}
+
+@media (max-height: 760px) {
+  .game-chat .chat-panel, .game-chat .people-panel { height: 120px; }
+  .game-chat { bottom: 18px; left: 18px; }
+}

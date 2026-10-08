@@ -1,0 +1,5 @@
+import { defineConfig } from 'vite';
+export default defineConfig({
+  server: { host: '0.0.0.0', port: 5173, strictPort: true, proxy: { '/socket.io': { target: 'http://127.0.0.1:3000', ws: true } } },
+  build: { chunkSizeWarningLimit: 1600, rollupOptions: { output: { manualChunks: { phaser: ['phaser'] } } } }
+});
