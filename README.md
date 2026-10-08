@@ -39,13 +39,23 @@ Os endereços são exemplos: use o IP real da máquina. Não é necessário conf
 - A aba **Na praça** mostra os participantes. Silenciar oculta o histórico e os balões daquele participante apenas no seu navegador. Voltar a ouvir restaura as mensagens ainda no histórico. O silêncio vale para a sessão atual do participante.
 - O botão ao lado do seu apelido sai da praça. Seu apelido e sua cor ficam salvos no navegador, quando o armazenamento local está disponível.
 
+## Fliperama do Brejo
+
+Chegue perto da máquina junto ao caminho central e escolha **Jogar** no convite. Ao escolher **Agora não**, o convite só volta depois de se afastar e se aproximar novamente.
+
+No **Pulo do Sapo**, siga a vitória-régia mais próxima com as setas **← / →** ou os botões. As próximas cinco folhas ficam visíveis. Cada salto correto vale **10 pontos**, com intervalo de 250 ms. Cair na água ou completar **60 segundos** encerra a partida e registra o resultado. **Escape** ou **Sair do fliperama** cancela a tentativa sem salvar pontos. Durante a partida seu sapo fica parado na praça; outras pessoas podem jogar ao mesmo tempo.
+
+O ranking mostra os dez melhores resultados e seu recorde pessoal. O servidor valida os saltos e guarda apenas o melhor resultado por apelido, ignorando diferenças entre maiúsculas e minúsculas. Empates favorecem o recorde atingido primeiro. Não há contas: quem reutilizar um apelido compartilha aquele recorde.
+
+Os recordes sobrevivem ao reinício em `data/arcade-scores.json`, criado automaticamente e ignorado pelo Git. A variável `ARCADE_SCORES_PATH` permite escolher outro arquivo. Preserve esse arquivo ao atualizar ou mover o servidor; ambientes descartáveis precisam de um volume persistente. Se não for possível ler ou salvar, o jogo informa **Ranking indisponível** e preserva o arquivo existente. Desconectar cancela a tentativa, e a reconexão retorna à praça.
+
 ## Arquitetura e limites
 
 - `client/`: Phaser desenha a praça e anima os sapos; HTML/CSS formam a interface acessível de entrada e conversa. Arte SVG em `client/art.ts`.
 - `server/`: Node.js, Express e Socket.IO. O servidor é a autoridade sobre identidade, posição, velocidade, trajetos e autoria de mensagens.
 - `shared/`: protocolo TypeScript, validações, mapa e busca A* com verificação de segmentos e suavização dos trajetos.
 - Uma praça, até **20 jogadores**, snapshots de posições a **10 Hz**, interpolação no cliente e velocidade de 135 unidades por segundo.
-- Estado apenas em memória; o servidor guarda as últimas **50 mensagens**. Reiniciar limpa participantes e histórico. As preferências locais são opcionais, sem contas ou autenticação.
+- Participantes e chat apenas em memória; o servidor guarda as últimas **50 mensagens**. Reiniciar limpa participantes e histórico, mas mantém os recordes do fliperama em disco. As preferências locais são opcionais, sem contas ou autenticação.
 - Mensagens de até **200 caracteres**, no máximo **uma por segundo por conexão**. Texto é inserido com `textContent` e nunca interpretado como HTML. Payloads Socket.IO têm limite de 8 KB.
 - Ao detectar uma desconexão, o cliente desativa chat e movimento. Após reconectar, tenta entrar com o mesmo perfil e recebe um estado completo. Se o apelido tiver sido ocupado ou a praça estiver cheia, a entrada reaparece com a explicação. Mensagens e destinos não são reenviados automaticamente.
 - Versão para computadores e grupos conhecidos. Contas, moderação para público aberto, celular, banco de dados, lojas, inventário e outras salas ficam fora desta entrega.
@@ -69,6 +79,6 @@ npm run build
 npm run test:e2e
 ```
 
-Vitest testa caminhos, validação e servidor com múltiplos clientes Socket.IO reais, incluindo movimento, substituição de destino, limites, reentrada e histórico. Playwright testa navegadores independentes, chat, texto HTML literal, silenciamento, saída, preferências e layout em 1280×720 e 1920×1080.
+Vitest testa caminhos, validação e servidor com múltiplos clientes Socket.IO reais, incluindo movimento, substituição de destino, limites, reentrada e histórico. Também verifica proximidade do fliperama, regras dos saltos, partidas simultâneas e persistência e falhas do ranking. Playwright testa navegadores independentes, chat, texto HTML literal, silenciamento, saída, preferências e o fluxo do fliperama em 1280×720 e 1920×1080. Os testes usam armazenamento temporário ou em memória, sem alterar os recordes reais.
 
 Os testes de navegador usam Microsoft Edge no caminho padrão do Windows quando disponível. Em outro ambiente, execute `npx playwright install chromium` uma vez. Cada teste inicia seu próprio servidor em uma porta livre, servindo o cliente compilado; rode `npm run build` antes. Capturas de tela ficam em `test-results/`. Os testes não alteram a praça em execução na porta 3000.

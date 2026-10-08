@@ -1,4 +1,5 @@
 import type { Point } from './protocol.js';
+import { ARCADE } from './arcade.js';
 export const WORLD = { width: 1200, height: 800, cell: 20, speed: 135 };
 export const SPAWN = { x: 550, y: 490 };
 // These footprints are also used to draw the scenery. Positions are frog foot points.
@@ -15,6 +16,7 @@ export const BENCHES = [{ x: 320, y: 300 }, { x: 790, y: 615 }];
 export const SIGN = { x: 475, y: 235 };
 export const inEllipse = (p: Point, x: number, y: number, rx: number, ry: number) => ((p.x - x) / rx) ** 2 + ((p.y - y) / ry) ** 2 <= 1;
 export function isWalkable(p: Point): boolean {
+  if (Math.abs(p.x - ARCADE.x) < 48 && Math.abs(p.y - ARCADE.y) < 28) return false;
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 30 || p.y < 100 || p.x > 1170 || p.y > 770) return false;
   if (inEllipse(p, POND.x, POND.y, POND.rx + 20, POND.ry + 20)) return false;
   if (TREES.some(t => inEllipse(p, t.x, t.y, 36 * t.scale, 25 * t.scale))) return false;
