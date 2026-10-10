@@ -1,9 +1,40 @@
 import { BENCHES, POND, ROCKS, SIGN, TREES } from '../shared/world';
+import { DEFAULT_APPEARANCE, type Appearance } from '../shared/protocol';
 const svg = (width: number, height: number, body: string) => `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`;
 // Phaser's SVG loader decodes base64 as a binary string. XML entities preserve accents
 // through that path as well as through a regular HTML image element.
 export const dataSvg = (source: string) => `data:image/svg+xml;base64,${btoa(source.replace(/[^\x00-\x7f]/gu, character => `&#${character.codePointAt(0)};`))}`;
-export function frogSvg(color: string): string {
+function outfitArt(id: Appearance['outfit']): string {
+  switch (id) {
+    case 'tshirt': return `<path d="M36 63l-10 7 8 11 7-5v17q19 10 38 0V76l7 5 8-11-10-7-8 5H44Z" fill="#e7a36f" stroke="#294737" stroke-width="3" stroke-linejoin="round"/><path d="M51 64q9 10 18 0" fill="none" stroke="#fff4d4" stroke-width="4"/>`;
+    case 'hoodie': return `<path d="M42 59q18-10 36 0l9 10-6 27q-21 10-42 0l-6-27Z" fill="#8d91bd" stroke="#294737" stroke-width="3"/><path d="M44 62q16 18 32 0M49 82h22v10H49z" fill="none" stroke="#d9d9ed" stroke-width="3"/><path d="M56 68v10m8-10v10" stroke="#fff8e5" stroke-width="2"/>`;
+    case 'jacket': return `<path d="M38 60l17-4 5 16 5-16 17 4 7 34q-13 10-28 4l-1-20-1 20q-15 6-28-4Z" fill="#c9a264" stroke="#294737" stroke-width="3" stroke-linejoin="round"/><path d="M52 59l8 16 8-16M60 76v21M40 82h12m16 0h12" fill="none" stroke="#7a6047" stroke-width="2.5"/><circle cx="65" cy="84" r="2" fill="#fff0c2"/>`;
+    case 'cape': return `<path d="M39 59Q22 68 18 96Q60 111 102 96Q98 68 81 59l-21 8Z" fill="#d68185" stroke="#294737" stroke-width="3" stroke-linejoin="round"/><path d="M43 65q17 13 34 0" fill="none" stroke="#f6d1ad" stroke-width="4"/><circle cx="60" cy="68" r="4" fill="#edc47a" stroke="#294737" stroke-width="2"/>`;
+    default: return '';
+  }
+}
+function glassesArt(id: Appearance['glasses']): string {
+  switch (id) {
+    case 'round': return `<g fill="none" stroke="#533e54" stroke-width="3.5"><circle cx="40" cy="33" r="13"/><circle cx="80" cy="33" r="13"/><path d="M53 31q7-5 14 0M27 31l-7-3m73 3 7-3"/></g>`;
+    case 'sunglasses': return `<path d="M25 25h29l-3 19q-12 8-22-2Zm41 0h29l-4 17q-10 10-22 2Z" fill="#344f52" stroke="#253d40" stroke-width="3" stroke-linejoin="round"/><path d="M54 29q6-5 12 0M30 28l-9-3m69 3 9-3" fill="none" stroke="#253d40" stroke-width="3"/><path d="M31 29h13m27 0h13" stroke="#c3dfd4" stroke-width="2" opacity=".55"/>`;
+    case 'square': return `<g fill="none" stroke="#bd795b" stroke-width="3.5" stroke-linejoin="round"><rect x="26" y="22" width="28" height="23" rx="5"/><rect x="66" y="22" width="28" height="23" rx="5"/><path d="M54 30q6-4 12 0M26 27l-7-3m75 3 7-3"/></g>`;
+    case 'heart': return `<g fill="#eea7b3" fill-opacity=".32" stroke="#a85d75" stroke-width="3" stroke-linejoin="round"><path d="M40 45Q17 31 29 23q7-5 11 2 7-9 14-2 10 10-14 22Z"/><path d="M80 45Q57 31 69 23q7-5 11 2 7-9 14-2 10 10-14 22Z"/></g><path d="M54 29q6-4 12 0" fill="none" stroke="#a85d75" stroke-width="3"/>`;
+    default: return '';
+  }
+}
+function hatArt(id: Appearance['hat']): string {
+  switch (id) {
+    case 'cap': return `<path d="M30 20Q32 1 59 3q24 0 31 17Z" fill="#e49c6d" stroke="#294737" stroke-width="3"/><path d="M61 18q23-6 41 2-4 8-30 8H53" fill="#c47a58" stroke="#294737" stroke-width="3"/><path d="M39 15q14-8 29-6" fill="none" stroke="#ffd9a1" stroke-width="2"/>`;
+    case 'bucket': return `<path d="M35 5h50l8 22H27Z" fill="#edcf83" stroke="#294737" stroke-width="3" stroke-linejoin="round"/><path d="M24 25q36-11 72 0l5 6q-41 12-82 0Z" fill="#d5b36d" stroke="#294737" stroke-width="3"/><path d="M34 18h52" stroke="#fff0b7" stroke-width="3"/>`;
+    case 'tophat': return `<path d="M41-4h38l4 28H37Z" fill="#4d5965" stroke="#294737" stroke-width="3"/><path d="M39 17h43v7H39Z" fill="#b17a9b"/><path d="M27 25h66q7 0 7 5H20q0-5 7-5Z" fill="#4d5965" stroke="#294737" stroke-width="3"/>`;
+    case 'crown': return `<path d="M29 23L25 2l19 12L59-4l16 18L95 2l-4 21Z" fill="#e9c45e" stroke="#294737" stroke-width="3" stroke-linejoin="round"/><path d="M30 22h60v8H30Z" fill="#d9a84e" stroke="#294737" stroke-width="3"/><circle cx="60" cy="19" r="4" fill="#c77f87"/><circle cx="42" cy="21" r="3" fill="#86aeaa"/><circle cx="78" cy="21" r="3" fill="#86aeaa"/>`;
+    default: return '';
+  }
+}
+export const outfitSvg = (id: NonNullable<Appearance['outfit']>) => svg(120, 110, outfitArt(id));
+export const glassesSvg = (id: NonNullable<Appearance['glasses']>) => svg(120, 110, glassesArt(id));
+export const hatSvg = (id: NonNullable<Appearance['hat']>) => svg(120, 110, hatArt(id));
+export function frogSvg(color: string, appearance: Appearance = DEFAULT_APPEARANCE): string {
   return svg(120, 110, `
     <g stroke="#294737" stroke-width="3.5" stroke-linejoin="round">
       <ellipse cx="30" cy="85" rx="20" ry="12" fill="${color}"/><ellipse cx="90" cy="85" rx="20" ry="12" fill="${color}"/>
@@ -16,7 +47,7 @@ export function frogSvg(color: string): string {
       <path d="M44 53Q60 65 76 53" fill="none" stroke-linecap="round"/>
       <ellipse cx="30" cy="51" rx="7" ry="4" fill="#e69c89" stroke="none" opacity=".65"/><ellipse cx="90" cy="51" rx="7" ry="4" fill="#e69c89" stroke="none" opacity=".65"/>
       <path d="M32 69L30 82M88 69L90 82" fill="none" stroke-linecap="round"/>
-    </g>`);
+    </g>${outfitArt(appearance.outfit)}${glassesArt(appearance.glasses)}${hatArt(appearance.hat)}`);
 }
 export function treeSvg(): string {
   return svg(180, 220, `<ellipse cx="90" cy="200" rx="59" ry="15" fill="#456a44" opacity=".18"/>

@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io-client';
-import type { ClientEvents, Player, ServerEvents } from '../shared/protocol';
+import { DEFAULT_APPEARANCE, type Appearance, type ClientEvents, type Player, type ServerEvents } from '../shared/protocol';
 import { ARCADE, ArcadeProximity, type ArcadeRanking, type ArcadeState, type Direction } from '../shared/arcade';
 import { dataSvg, frogSvg } from './art';
 import './arcade.css';
@@ -16,6 +16,7 @@ export class ArcadeUI {
   private jumpingUntil = 0;
   private previousFocus: HTMLElement | null = null;
   private color = '#80b85c';
+  private appearance: Appearance = DEFAULT_APPEARANCE;
   private landed: Direction | null = null;
   private saving = false;
   private rankingVersion = 0;
@@ -69,6 +70,7 @@ export class ArcadeUI {
   get active() { return this.dialog.open; }
   update(player: Player) {
     this.color = player.color;
+    this.appearance = player.appearance;
     if (this.active) return;
     const action = this.proximity.update(player);
     if (action === 'open') this.prompt.hidden = false;
@@ -115,7 +117,7 @@ export class ArcadeUI {
     this.get('[data-finished]').hidden = true; this.get('[data-controls]').hidden = false;
     this.get('[data-score]').textContent = '0'; this.get('[data-time]').textContent = '60s';
     this.get('[data-platforms]').replaceChildren(); this.get('.arcade-water').classList.remove('is-fallen');
-    this.get<HTMLImageElement>('[data-frog]').src = dataSvg(frogSvg(this.color));
+    this.get<HTMLImageElement>('[data-frog]').src = dataSvg(frogSvg(this.color, this.appearance));
     this.get('[data-frog]').getAnimations().forEach(animation => animation.cancel());
     this.get('[data-frog]').style.transform = '';
     this.renderRanking(); this.refreshControls();

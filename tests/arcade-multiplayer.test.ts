@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { io, type Socket } from 'socket.io-client';
 import { createGameServer } from '../server/game';
-import { COLORS, type ClientEvents, type Reply, type ServerEvents } from '../shared/protocol';
+import { COLORS, DEFAULT_APPEARANCE, type ClientEvents, type Reply, type ServerEvents } from '../shared/protocol';
 import { ARCADE, type ArcadeRanking, type ArcadeState } from '../shared/arcade';
 
 describe('fliperama com clientes reais', () => {
@@ -12,7 +12,7 @@ describe('fliperama com clientes reais', () => {
   async function connect(nickname: string) {
     const client: Socket<ServerEvents, ClientEvents> = io(url, { transports: ['websocket'], forceNew: true }); clients.push(client);
     await new Promise<void>(resolve => client.once('connect', resolve));
-    await new Promise<void>(resolve => client.emit('player:join', { nickname, color: COLORS[0].hex }, reply => { expect(reply.ok).toBe(true); resolve(); }));
+    await new Promise<void>(resolve => client.emit('player:join', { nickname, color: COLORS[0].hex, appearance: DEFAULT_APPEARANCE }, reply => { expect(reply.ok).toBe(true); resolve(); }));
     return client;
   }
   async function approach(c: typeof clients[number]) {

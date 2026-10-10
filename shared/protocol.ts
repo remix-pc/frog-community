@@ -5,10 +5,31 @@ export const COLORS = [
   { name: 'Pitanga', hex: '#d9898b' }, { name: 'Pêssego', hex: '#e5a265' },
   { name: 'Sol', hex: '#d7bf58' }, { name: 'Musgo', hex: '#678b5c' }
 ] as const;
+export const OUTFITS = [
+  { id: null, name: 'Nenhuma' }, { id: 'tshirt', name: 'Camiseta' },
+  { id: 'hoodie', name: 'Moletom' }, { id: 'jacket', name: 'Jaqueta' },
+  { id: 'cape', name: 'Capa' }
+] as const;
+export const GLASSES = [
+  { id: null, name: 'Nenhum' }, { id: 'round', name: 'Redondos' },
+  { id: 'sunglasses', name: 'Escuros' }, { id: 'square', name: 'Quadrados' },
+  { id: 'heart', name: 'Coração' }
+] as const;
+export const HATS = [
+  { id: null, name: 'Nenhum' }, { id: 'cap', name: 'Boné' },
+  { id: 'bucket', name: 'Pescador' }, { id: 'tophat', name: 'Cartola' },
+  { id: 'crown', name: 'Coroa' }
+] as const;
+export type Appearance = {
+  outfit: (typeof OUTFITS)[number]['id'];
+  glasses: (typeof GLASSES)[number]['id'];
+  hat: (typeof HATS)[number]['id'];
+};
+export const DEFAULT_APPEARANCE: Appearance = { outfit: null, glasses: null, hat: null };
 export type Point = { x: number; y: number };
-export type Profile = { nickname: string; color: string };
+export type Profile = { nickname: string; color: string; appearance: Appearance };
 export type Player = Profile & Point & { id: string; moving: boolean; facing: number };
-export type ChatMessage = { id: string; playerId: string; nickname: string; color: string; text: string; sentAt: number };
+export type ChatMessage = { id: string; playerId: string; nickname: string; color: string; appearance: Appearance; text: string; sentAt: number };
 export type WorldState = { players: Player[]; messages: ChatMessage[] };
 export type Reply<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 export interface ClientEvents {
@@ -17,6 +38,7 @@ export interface ClientEvents {
   'arcade:leave': () => void;
   'arcade:ranking': (reply: (result: Reply<ArcadeRanking>) => void) => void;
   'player:join': (profile: Profile, reply: (result: Reply<{ selfId: string; state: WorldState }>) => void) => void;
+  'player:appearance': (appearance: Appearance, reply: (result: Reply<Appearance>) => void) => void;
   'player:move': (destination: Point) => void;
   'chat:send': (text: string, reply: (result: Reply) => void) => void;
   'player:leave': () => void;
@@ -26,6 +48,7 @@ export interface ServerEvents {
   'arcade:ranking': (ranking: ArcadeRanking) => void;
   'world:positions': (players: Player[]) => void;
   'player:joined': (player: Player) => void;
+  'player:appearance': (id: string, appearance: Appearance) => void;
   'player:left': (id: string) => void;
   'chat:message': (message: ChatMessage) => void;
   'game:error': (message: string) => void;
@@ -37,7 +60,17 @@ export function parseProfile(value: unknown): Profile | null {
   const name = nickname.trim().normalize('NFC');
   if (name.length < 3 || name.length > 20 || !/^[\p{L}\p{N}_ -]+$/u.test(name)) return null;
   if (!COLORS.some(c => c.hex === color)) return null;
-  return { nickname: name, color };
+  const appearance = 'appearance' in value ? parseAppearance(value.appearance) : { ...DEFAULT_APPEARANCE };
+  if (!appearance) return null;
+  return { nickname: name, color, appearance };
+}
+export function parseAppearance(value: unknown): Appearance | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const { outfit, glasses, hat } = value as Record<string, unknown>;
+  if (!OUTFITS.some(option => option.id === outfit)) return null;
+  if (!GLASSES.some(option => option.id === glasses)) return null;
+  if (!HATS.some(option => option.id === hat)) return null;
+  return { outfit: outfit as Appearance['outfit'], glasses: glasses as Appearance['glasses'], hat: hat as Appearance['hat'] };
 }
 export function parseMessage(value: unknown): string | null {
   if (typeof value !== 'string') return null;
