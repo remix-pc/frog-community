@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import { COLORS, type Player, type Point } from '../shared/protocol';
+import { COLORS, GLASSES, HATS, OUTFITS, type Appearance, type Player, type Point } from '../shared/protocol';
 import { isWalkable, TREES, WORLD } from '../shared/world';
-import { arcadeSvg, dataSvg, frogSvg, groundSvg, treeSvg } from './art';
+import { arcadeSvg, dataSvg, frogSvg, glassesSvg, groundSvg, hatSvg, outfitSvg, treeSvg } from './art';
 import { ARCADE } from '../shared/arcade';
 
-type Avatar = { root: Phaser.GameObjects.Container; sprite: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text; target: Player; phase: number };
+type Avatar = { root: Phaser.GameObjects.Container; visual: Phaser.GameObjects.Container; base: Phaser.GameObjects.Image; layers: Record<keyof Appearance, Phaser.GameObjects.Image>; rendered: string; target: Player; phase: number };
 export class PlazaScene extends Phaser.Scene {
   private avatars = new Map<string, Avatar>();
   private pending: Player[] = [];
@@ -22,6 +22,9 @@ export class PlazaScene extends Phaser.Scene {
     this.load.svg('ground', dataSvg(groundSvg()));
     this.load.svg('tree', dataSvg(treeSvg()));
     COLORS.forEach(c => this.load.svg(c.hex, dataSvg(frogSvg(c.hex))));
+    OUTFITS.forEach(item => { if (item.id) this.load.svg(`outfit:${item.id}`, dataSvg(outfitSvg(item.id))); });
+    GLASSES.forEach(item => { if (item.id) this.load.svg(`glasses:${item.id}`, dataSvg(glassesSvg(item.id))); });
+    HATS.forEach(item => { if (item.id) this.load.svg(`hat:${item.id}`, dataSvg(hatSvg(item.id))); });
   }
   create() {
     this.add.image(0, 0, 'ground').setOrigin(0);
@@ -60,16 +63,36 @@ export class PlazaScene extends Phaser.Scene {
     for (const [id, avatar] of this.avatars) if (!ids.has(id)) { avatar.root.destroy(); this.avatars.delete(id); this.removeBubble(id); }
     for (const player of players) {
       const existing = this.avatars.get(player.id);
-      if (existing) { existing.target = player; continue; }
+      if (existing) { existing.target = player; this.applyAppearance(existing); continue; }
       const shadow = this.add.ellipse(0, 1, 48, 16, 0x3b6546, 0.2);
-      const sprite = this.add.image(0, -29, player.color).setDisplaySize(73, 67);
+      const base = this.add.image(0, 0, player.color).setDisplaySize(73, 67);
+      const layers = {
+        outfit: this.add.image(0, 0, player.color).setDisplaySize(73, 67).setVisible(false),
+        glasses: this.add.image(0, 0, player.color).setDisplaySize(73, 67).setVisible(false),
+        hat: this.add.image(0, 0, player.color).setDisplaySize(73, 67).setVisible(false)
+      };
+      const visual = this.add.container(0, -29, [base, layers.outfit, layers.glasses, layers.hat]);
       const label = this.add.text(0, 18, player.nickname + (player.id === this.selfId ? ' · você' : ''), {
         fontFamily: 'Trebuchet MS, sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#294a36', backgroundColor: '#fff9e5', padding: { x: 8, y: 4 }
       }).setOrigin(0.5, 0);
-      const root = this.add.container(player.x, player.y, [shadow, sprite, label]);
-      this.avatars.set(player.id, { root, sprite, label, target: player, phase: this.avatars.size * 2.1 });
+      const root = this.add.container(player.x, player.y, [shadow, visual, label]);
+      const avatar = { root, visual, base, layers, rendered: '', target: player, phase: this.avatars.size * 2.1 };
+      this.avatars.set(player.id, avatar);
+      this.applyAppearance(avatar);
     }
     if (!ids.has(this.selfId)) this.focusRing?.setVisible(false);
+  }
+  private applyAppearance(avatar: Avatar) {
+    const { color, appearance } = avatar.target;
+    const key = `${color}:${appearance.outfit}:${appearance.glasses}:${appearance.hat}`;
+    if (avatar.rendered === key) return;
+    avatar.base.setTexture(color);
+    for (const category of ['outfit', 'glasses', 'hat'] as const) {
+      const id = appearance[category];
+      avatar.layers[category].setVisible(!!id);
+      if (id) avatar.layers[category].setTexture(`${category}:${id}`);
+    }
+    avatar.rendered = key;
   }
   showBubble(id: string, text: string) {
     if (!this.ready || !this.avatars.has(id)) return;
@@ -86,14 +109,14 @@ export class PlazaScene extends Phaser.Scene {
   clearBubbles() { for (const id of this.bubbles.keys()) this.removeBubble(id); }
   update(time: number, delta: number) {
     for (const [id, avatar] of this.avatars) {
-      const { root, sprite, target } = avatar;
+      const { root, visual, target } = avatar;
       const blend = 1 - Math.exp(-delta / 70);
       root.x += (target.x - root.x) * blend; root.y += (target.y - root.y) * blend;
       root.setDepth(root.y);
       const hopping = target.moving ? Math.abs(Math.sin(time / 105 + avatar.phase)) * 8 : Math.sin(time / 420 + avatar.phase) * 1.2;
-      sprite.y = -29 - hopping;
-      sprite.setFlipX(target.facing < 0);
-      sprite.setAngle(target.moving ? Math.sin(time / 105 + avatar.phase) * 3 : 0);
+      visual.y = -29 - hopping;
+      visual.setScale(target.facing < 0 ? -1 : 1, 1);
+      visual.setAngle(target.moving ? Math.sin(time / 105 + avatar.phase) * 3 : 0);
       if (id === this.selfId) this.focusRing?.setVisible(true).setPosition(root.x, root.y + 1).setDepth(root.y - 0.5);
       const bubble = this.bubbles.get(id);
       if (bubble) {

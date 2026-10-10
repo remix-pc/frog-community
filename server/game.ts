@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { Server } from 'socket.io';
-import { parseMessage, parseProfile, type ClientEvents, type ServerEvents, type Player, type Point, type ChatMessage } from '../shared/protocol.js';
+import { parseAppearance, parseMessage, parseProfile, type ClientEvents, type ServerEvents, type Player, type Point, type ChatMessage } from '../shared/protocol.js';
 import { findPath, SPAWN, WORLD } from '../shared/world.js';
 import { ARCADE, arcadeDistance } from '../shared/arcade.js';
 import { ArcadeRound, ArcadeScoreStore } from './arcade.js';
@@ -50,6 +50,17 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
       reply({ ok: true, data: { selfId: socket.id, state: { players: [...players.values()], messages: [...messages] } } });
       socket.to('plaza').emit('player:joined', player);
     });
+    socket.on('player:appearance', (input, reply) => {
+      if (typeof reply !== 'function') return;
+      const player = players.get(socket.id);
+      if (!player) return reply({ ok: false, error: 'Entre na praça para personalizar seu sapo.' });
+      if (rounds.has(socket.id)) return reply({ ok: false, error: 'Termine a partida antes de personalizar seu sapo.' });
+      const appearance = parseAppearance(input);
+      if (!appearance) return reply({ ok: false, error: 'Escolha roupas e acessórios disponíveis.' });
+      player.appearance = appearance;
+      reply({ ok: true, data: appearance });
+      io.to('plaza').emit('player:appearance', player.id, appearance);
+    });
     socket.on('player:move', destination => {
       const player = players.get(socket.id), now = Date.now();
       if (!player || rounds.has(socket.id) || now - lastMove < 80) return;
@@ -91,7 +102,7 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
       if (!text) return reply({ ok: false, error: 'Escreva uma mensagem de até 200 caracteres.' });
       if (now - lastMessage < 1000) return reply({ ok: false, error: 'Um pulinho de cada vez! Espere um segundo para enviar.' });
       lastMessage = now;
-      const message: ChatMessage = { id: randomUUID(), playerId: player.id, nickname: player.nickname, color: player.color, text, sentAt: now };
+      const message: ChatMessage = { id: randomUUID(), playerId: player.id, nickname: player.nickname, color: player.color, appearance: { ...player.appearance }, text, sentAt: now };
       messages.push(message);
       if (messages.length > 50) messages.shift();
       io.to('plaza').emit('chat:message', message);

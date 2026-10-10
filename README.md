@@ -33,11 +33,11 @@ Os endereços são exemplos: use o IP real da máquina. Não é necessário conf
 
 ## Como jogar
 
-- Escolha um apelido de 3 a 20 caracteres (letras, números, espaço, `_` ou `-`) e uma das oito cores. Apelidos em uso não podem ser repetidos.
+- Escolha um apelido de 3 a 20 caracteres (letras, números, espaço, `_` ou `-`), uma das oito cores e até uma roupa, um par de óculos e um chapéu. As abas da entrada mostram quatro peças de cada tipo, além da opção sem acessório. Apelidos em uso não podem ser repetidos.
 - Clique na grama ou nos caminhos. Seu sapo contorna bancos, árvores, pedras e o lago. Um novo clique muda seu destino.
 - Digite no chat flutuante dentro do jogo e pressione Enter para enviar. Shift+Enter adiciona uma quebra de linha; Escape tira o foco do campo. As mensagens aparecem para todos em balões sobre os sapos durante seis segundos e no histórico. O botão **−** recolhe o histórico para liberar o cenário, mantendo o campo de mensagem disponível.
 - A aba **Na praça** mostra os participantes. Silenciar oculta o histórico e os balões daquele participante apenas no seu navegador. Voltar a ouvir restaura as mensagens ainda no histórico. O silêncio vale para a sessão atual do participante.
-- O botão ao lado do seu apelido sai da praça. Seu apelido e sua cor ficam salvos no navegador, quando o armazenamento local está disponível.
+- O botão **Personalizar sapo** ao lado do seu apelido abre o editor. Experimente as peças na prévia e escolha **Salvar visual** para mostrá-las a todos; **Cancelar** mantém o visual anterior. O editor fica indisponível durante uma partida no fliperama. O botão ao lado sai da praça. Apelido, cor e visual confirmado ficam salvos no navegador, quando o armazenamento local está disponível.
 
 ## Fliperama do Brejo
 
