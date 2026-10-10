@@ -55,16 +55,24 @@ Os recordes sobrevivem ao reinício em `data/arcade-scores.json`, criado automat
 
 A praça segue o horário de São Paulo (`America/Sao_Paulo`): dia das **06h às 17h59**, noite das **18h às 05h59**. À noite, o cenário escurece suavemente e seis luminárias iluminam os caminhos. A aparência é atualizada automaticamente com a página aberta e ao voltar para a aba. É necessário que o relógio do dispositivo esteja correto.
 
+## Cinema do Brejo
+
+Siga o caminho no topo da praça ou clique na placa **Cinema ↑**. Ao chegar à passagem, seu sapo entra no cinema ao ar livre: um telão gigante, 24 cadeiras voltadas para ele e corredores para circular, sem carros. Para voltar, caminhe até a placa **Praça ↓** na parte inferior do cinema.
+
+Clique em uma cadeira para caminhar até ela e sentar de frente para o telão. A cadeira fica reservada durante o trajeto, e cada assento comporta apenas um sapo. Clique no chão para levantar; escolher outro destino libera a cadeira anterior. Saídas e desconexões também liberam assentos e reservas. A cor e os acessórios continuam visíveis na postura sentada.
+
+Cada mapa tem seus próprios participantes, balões e histórico das últimas 50 mensagens. Ao mudar de espaço, você passa a conversar com quem está naquele local. O cinema acompanha o mesmo ciclo de dia e noite, mantendo o telão iluminado. Nesta versão, a tela exibe uma arte de boas-vindas, sem vídeo ou áudio. Os fliperamas continuam na praça; reconectar retorna à praça, sem guardar mapa ou assento.
+
 ## Arquitetura e limites
 
 - `client/`: Phaser desenha a praça e anima os sapos; HTML/CSS formam a interface acessível de entrada e conversa. Arte SVG em `client/art.ts`.
 - `server/`: Node.js, Express e Socket.IO. O servidor é a autoridade sobre identidade, posição, velocidade, trajetos e autoria de mensagens.
 - `shared/`: protocolo TypeScript, validações, mapa e busca A* com verificação de segmentos e suavização dos trajetos.
-- Uma praça, até **20 jogadores**, snapshots de posições a **10 Hz**, interpolação no cliente e velocidade de 135 unidades por segundo.
-- Participantes e chat apenas em memória; o servidor guarda as últimas **50 mensagens**. Reiniciar limpa participantes e histórico, mas mantém os recordes do fliperama em disco. As preferências locais são opcionais, sem contas ou autenticação.
+- Dois mapas, praça e cinema, com até **20 jogadores no total**, snapshots de posições por mapa a **10 Hz**, interpolação no cliente e velocidade de 135 unidades por segundo. Transições e reservas de assentos são controladas pelo servidor.
+- Participantes e chat apenas em memória; o servidor guarda as últimas **50 mensagens de cada mapa**. Reiniciar limpa participantes e históricos, mas mantém os recordes do fliperama em disco. As preferências locais são opcionais, sem contas ou autenticação.
 - Mensagens de até **200 caracteres**, no máximo **uma por segundo por conexão**. Texto é inserido com `textContent` e nunca interpretado como HTML. Payloads Socket.IO têm limite de 8 KB.
 - Ao detectar uma desconexão, o cliente desativa chat e movimento. Após reconectar, tenta entrar com o mesmo perfil e recebe um estado completo. Se o apelido tiver sido ocupado ou a praça estiver cheia, a entrada reaparece com a explicação. Mensagens e destinos não são reenviados automaticamente.
-- Versão para computadores e grupos conhecidos. Contas, moderação para público aberto, celular, banco de dados, lojas, inventário e outras salas ficam fora desta entrega.
+- Versão para computadores e grupos conhecidos. Contas, moderação para público aberto, celular, banco de dados, lojas e inventário ficam fora desta entrega.
 
 ## Avisos de atualização no Discord
 

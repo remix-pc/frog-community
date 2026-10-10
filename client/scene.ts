@@ -1,15 +1,18 @@
 import Phaser from 'phaser';
-import { COLORS, GLASSES, HATS, OUTFITS, type Appearance, type Player, type Point } from '../shared/protocol';
+import { COLORS, GLASSES, HATS, OUTFITS, type Appearance, type MapId, type Player, type Point } from '../shared/protocol';
 import { isWalkable, LAMPS, TREES, WORLD } from '../shared/world';
 import { arcadeSvg, dataSvg, fireflyConsoleSvg, frogSvg, glassesSvg, groundSvg, hatSvg, lampGlowSvg, lampSvg, nightOverlaySvg, outfitSvg, treeSvg } from './art';
 import { ARCADE } from '../shared/arcade';
 import { FIREFLY } from '../shared/firefly';
+import { CINEMA_LAMPS, CINEMA_SCREEN, CINEMA_SEATS, CINEMA_TREES, PORTALS } from '../shared/cinema';
+import { cinemaChairSvg, cinemaGroundSvg, cinemaScreenSvg, seatedCapSvg, seatedFrogSvg, seatedGlassesSvg, seatedOutfitSvg } from './cinema-art';
 
-type Avatar = { root: Phaser.GameObjects.Container; visual: Phaser.GameObjects.Container; base: Phaser.GameObjects.Image; layers: Record<keyof Appearance, Phaser.GameObjects.Image>; rendered: string; target: Player; phase: number };
+type Avatar = { root: Phaser.GameObjects.Container; visual: Phaser.GameObjects.Container; base: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text; shadow: Phaser.GameObjects.Ellipse; layers: Record<keyof Appearance, Phaser.GameObjects.Image>; rendered: string; target: Player; phase: number };
 export class PlazaScene extends Phaser.Scene {
   private avatars = new Map<string, Avatar>();
   private pending: Player[] = [];
   private ready = false;
+  private mapId: MapId = 'plaza';
   private selfId = '';
   private enabled = false;
   private focusRing?: Phaser.GameObjects.Ellipse;
@@ -19,9 +22,18 @@ export class PlazaScene extends Phaser.Scene {
   private nightOverlay?: Phaser.GameObjects.Image;
   private lampGlows: Phaser.GameObjects.Image[] = [];
   onMove: (point: Point) => void = () => {};
+  onSit: (seatId: string) => void = () => {};
   onInvalid: () => void = () => {};
   constructor() { super('plaza'); }
   preload() {
+    this.load.svg('cinema-ground', dataSvg(cinemaGroundSvg()));
+    this.load.svg('cinema-screen', dataSvg(cinemaScreenSvg()));
+    this.load.svg('chair', dataSvg(cinemaChairSvg()));
+    this.load.svg('chair-back', dataSvg(cinemaChairSvg(true)));
+    this.load.svg('seated-glasses', dataSvg(seatedGlassesSvg()));
+    this.load.svg('seated-cap', dataSvg(seatedCapSvg()));
+    COLORS.forEach(c => this.load.svg(`seated:${c.hex}`, dataSvg(seatedFrogSvg(c.hex))));
+    OUTFITS.forEach(item => { if (item.id) this.load.svg(`seated-outfit:${item.id}`, dataSvg(seatedOutfitSvg(item.id))); });
     this.load.svg('arcade', dataSvg(arcadeSvg()));
     this.load.svg('firefly-console', dataSvg(fireflyConsoleSvg()));
     this.load.svg('lamp', dataSvg(lampSvg()));
@@ -34,31 +46,57 @@ export class PlazaScene extends Phaser.Scene {
     GLASSES.forEach(item => { if (item.id) this.load.svg(`glasses:${item.id}`, dataSvg(glassesSvg(item.id))); });
     HATS.forEach(item => { if (item.id) this.load.svg(`hat:${item.id}`, dataSvg(hatSvg(item.id))); });
   }
-  create() {
-    this.add.image(0, 0, 'ground').setOrigin(0);
-    this.add.image(ARCADE.x, ARCADE.y + 12, 'arcade').setOrigin(0.5, 1).setDepth(ARCADE.y);
-    this.add.image(FIREFLY.x, FIREFLY.y + 6, 'firefly-console').setOrigin(0.5, 1).setDepth(FIREFLY.y);
-    LAMPS.forEach(lamp => this.add.image(lamp.x, lamp.y + 5, 'lamp').setOrigin(0.5, 1).setDepth(lamp.y));
-    TREES.forEach(t => this.add.image(t.x, t.y + 17 * t.scale, 'tree').setOrigin(0.5, 1).setScale(t.scale).setDepth(t.y));
-    // Subtle glints drift across the pond; everything remains readable at rest.
-    for (let i = 0; i < 7; i++) {
-      const ripple = this.add.ellipse(800 + (i * 43) % 260, 240 + (i * 53) % 160, 28 + i * 3, 7).setStrokeStyle(2, 0xe9f3d3, 0.4);
-      this.tweens.add({ targets: ripple, x: ripple.x + 15, alpha: 0.1, scaleX: 1.4, duration: 2200 + i * 320, yoyo: true, repeat: -1, delay: i * 430 });
+  private drawMap() {
+    const cinema = this.mapId === 'cinema';
+    const lamps = cinema ? CINEMA_LAMPS : LAMPS, trees = cinema ? CINEMA_TREES : TREES;
+    this.add.image(0, 0, cinema ? 'cinema-ground' : 'ground').setOrigin(0);
+    if (!cinema) {
+      this.add.graphics().lineStyle(100, 0xe2d6a8).lineBetween(490, 0, 490, 167);
+      this.add.image(ARCADE.x, ARCADE.y + 12, 'arcade').setOrigin(0.5, 1).setDepth(ARCADE.y);
+      this.add.image(FIREFLY.x, FIREFLY.y + 6, 'firefly-console').setOrigin(0.5, 1).setDepth(FIREFLY.y);
+      // Subtle glints drift across the pond; everything remains readable at rest.
+      for (let i = 0; i < 7; i++) {
+        const ripple = this.add.ellipse(800 + (i * 43) % 260, 240 + (i * 53) % 160, 28 + i * 3, 7).setStrokeStyle(2, 0xe9f3d3, 0.4);
+        this.tweens.add({ targets: ripple, x: ripple.x + 15, alpha: 0.1, scaleX: 1.4, duration: 2200 + i * 320, yoyo: true, repeat: -1, delay: i * 430 });
+      }
+    } else {
+      this.add.image(CINEMA_SCREEN.x, CINEMA_SCREEN.y, 'cinema-screen').setOrigin(0.5, 1).setDepth(2502);
+      for (const seat of CINEMA_SEATS) {
+        this.add.image(seat.x, seat.y + 28, 'chair').setOrigin(0.5, 1).setDepth(seat.y - 30);
+        this.add.image(seat.x, seat.y + 28, 'chair-back').setOrigin(0.5, 1).setDepth(seat.access.y + 0.5);
+      }
     }
+    lamps.forEach(lamp => this.add.image(lamp.x, lamp.y + 5, 'lamp').setOrigin(0.5, 1).setDepth(lamp.y));
+    trees.forEach(t => this.add.image(t.x, t.y + 17 * t.scale, 'tree').setOrigin(0.5, 1).setScale(t.scale).setDepth(t.y));
+    const portal = PORTALS[this.mapId];
+    this.add.text(portal.point.x, portal.point.y - 30, portal.label, { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '21px', fontStyle: 'bold', color: '#365941', backgroundColor: '#f4e5b9', padding: { x: 16, y: 9 } }).setOrigin(0.5).setDepth(2503);
     this.focusRing = this.add.ellipse(0, 0, 64, 27).setStrokeStyle(2.5, 0xfff6d7).setVisible(false);
     this.destination = this.add.circle(0, 0, 10).setStrokeStyle(2, 0x54744b).setVisible(false);
     this.nightOverlay = this.add.image(0, 0, 'night-overlay').setOrigin(0).setDepth(2500).setAlpha(0);
-    this.lampGlows = LAMPS.map(lamp => this.add.image(lamp.x, lamp.y - 83, 'lamp-glow').setDepth(2501).setAlpha(0));
+    this.lampGlows = lamps.map(lamp => this.add.image(lamp.x, lamp.y - 83, 'lamp-glow').setDepth(2501).setAlpha(0));
+    if (cinema) this.lampGlows.push(this.add.image(720, 215, 'lamp-glow').setScale(1.8, 1).setDepth(2501).setAlpha(0));
+    this.game.canvas.dataset.mapId = this.mapId;
+    this.game.canvas.dataset.seatId = '';
+    this.applyNight(false);
+  }
+  create() {
+    this.drawMap();
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.enabled || pointer.rightButtonDown()) return;
       const clicked = { x: pointer.worldX, y: pointer.worldY };
       // The cabinet is an obstacle. Clicking its art should lead to the playable side.
-      const cabinetClicked = Math.abs(clicked.x - ARCADE.x) <= 60 &&
+      const portal = PORTALS[this.mapId];
+      const portalClicked = Math.abs(clicked.x - portal.point.x) <= 90 && Math.abs(clicked.y - (portal.point.y - 30)) <= 28;
+      if (this.mapId === 'cinema' && !portalClicked) {
+        const seat = CINEMA_SEATS.find(s => Math.abs(clicked.x - s.x) <= 38 && clicked.y >= s.y - 42 && clicked.y <= s.y + 28);
+        if (seat) { this.onSit(seat.id); return; }
+      }
+      const cabinetClicked = this.mapId === 'plaza' && Math.abs(clicked.x - ARCADE.x) <= 60 &&
         clicked.y >= ARCADE.y - 158 && clicked.y <= ARCADE.y + 12;
-      const fireflyClicked = Math.abs(clicked.x - FIREFLY.x) <= 42 &&
+      const fireflyClicked = this.mapId === 'plaza' && Math.abs(clicked.x - FIREFLY.x) <= 42 &&
         clicked.y >= FIREFLY.y - 82 && clicked.y <= FIREFLY.y + 6;
-      const point = cabinetClicked ? ARCADE.interaction : fireflyClicked ? FIREFLY.interaction : clicked;
-      if (!isWalkable(point)) { this.onInvalid(); return; }
+      const point = portalClicked ? portal.point : cabinetClicked ? ARCADE.interaction : fireflyClicked ? FIREFLY.interaction : clicked;
+      if (!isWalkable(point, this.mapId)) { this.onInvalid(); return; }
       this.onMove(point);
       this.destination!.setPosition(point.x, point.y).setVisible(true).setAlpha(1).setScale(0.5);
       this.tweens.killTweensOf(this.destination!);
@@ -68,6 +106,17 @@ export class PlazaScene extends Phaser.Scene {
     this.applyNight(false);
     this.setPlayers(this.pending);
     this.game.canvas.dataset.ready = 'true';
+  }
+  setMap(mapId: MapId) {
+    if (this.mapId === mapId) return;
+    this.mapId = mapId;
+    this.pending = [];
+    if (!this.ready) return;
+    this.clearBubbles();
+    this.tweens.killAll();
+    this.avatars.clear();
+    this.children.removeAll(true);
+    this.drawMap();
   }
   setSelf(id: string) { this.selfId = id; }
   setEnabled(enabled: boolean) { this.enabled = enabled; }
@@ -105,21 +154,26 @@ export class PlazaScene extends Phaser.Scene {
         fontFamily: 'Trebuchet MS, sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#294a36', backgroundColor: '#fff9e5', padding: { x: 8, y: 4 }
       }).setOrigin(0.5, 0);
       const root = this.add.container(player.x, player.y, [shadow, visual, label]);
-      const avatar = { root, visual, base, layers, rendered: '', target: player, phase: this.avatars.size * 2.1 };
+      const avatar = { root, visual, base, layers, label, shadow, rendered: '', target: player, phase: this.avatars.size * 2.1 };
       this.avatars.set(player.id, avatar);
       this.applyAppearance(avatar);
     }
     if (!ids.has(this.selfId)) this.focusRing?.setVisible(false);
   }
   private applyAppearance(avatar: Avatar) {
-    const { color, appearance } = avatar.target;
-    const key = `${color}:${appearance.outfit}:${appearance.glasses}:${appearance.hat}`;
+    const { color, appearance, seatId } = avatar.target;
+    const key = `${color}:${appearance.outfit}:${appearance.glasses}:${appearance.hat}:${seatId}`;
     if (avatar.rendered === key) return;
-    avatar.base.setTexture(color);
+    avatar.base.setTexture(seatId ? `seated:${color}` : color);
     for (const category of ['outfit', 'glasses', 'hat'] as const) {
       const id = appearance[category];
       avatar.layers[category].setVisible(!!id);
-      if (id) avatar.layers[category].setTexture(`${category}:${id}`);
+      if (id) {
+        const texture = seatId && category === 'outfit' ? `seated-outfit:${id}`
+          : seatId && category === 'glasses' ? 'seated-glasses'
+          : seatId && category === 'hat' && id === 'cap' ? 'seated-cap' : `${category}:${id}`;
+        avatar.layers[category].setTexture(texture);
+      }
     }
     avatar.rendered = key;
   }
@@ -142,11 +196,16 @@ export class PlazaScene extends Phaser.Scene {
       const blend = 1 - Math.exp(-delta / 70);
       root.x += (target.x - root.x) * blend; root.y += (target.y - root.y) * blend;
       root.setDepth(root.y);
-      const hopping = target.moving ? Math.abs(Math.sin(time / 105 + avatar.phase)) * 8 : Math.sin(time / 420 + avatar.phase) * 1.2;
-      visual.y = -29 - hopping;
-      visual.setScale(target.facing < 0 ? -1 : 1, 1);
+      const hopping = target.seatId ? 0 : target.moving ? Math.abs(Math.sin(time / 105 + avatar.phase)) * 8 : Math.sin(time / 420 + avatar.phase) * 1.2;
+      visual.y = (target.seatId ? -58 : -29) - hopping;
+      avatar.label.y = target.seatId ? -8 : 18;
+      avatar.shadow.y = target.seatId ? -16 : 1;
+      visual.setScale(!target.seatId && target.facing < 0 ? -1 : 1, target.seatId ? 0.9 : 1);
       visual.setAngle(target.moving ? Math.sin(time / 105 + avatar.phase) * 3 : 0);
-      if (id === this.selfId) this.focusRing?.setVisible(true).setPosition(root.x, root.y + 1).setDepth(root.y - 0.5);
+      if (id === this.selfId) {
+        this.focusRing?.setVisible(true).setPosition(root.x, root.y + (target.seatId ? -16 : 1)).setDepth(root.y - 0.5);
+        this.game.canvas.dataset.seatId = target.seatId ?? '';
+      }
       const bubble = this.bubbles.get(id);
       if (bubble) {
         if (time > bubble.expires) this.removeBubble(id);

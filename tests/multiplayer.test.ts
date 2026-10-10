@@ -53,7 +53,7 @@ describe('servidor com clientes Socket.IO reais', () => {
     b.on('world:positions', ps => { const p = ps.find(p => p.id === a.id); if (p) positions.push(p); });
     a.emit('player:move', { x: 620, y: 490 }); await delay(1250);
     expect(positions.length).toBeGreaterThan(8); expect(positions.at(-1)?.x).toBeCloseTo(620, 0);
-    expect(positions.every(isWalkable)).toBe(true);
+    expect(positions.every(point => isWalkable(point))).toBe(true);
     for (let i = 1; i < positions.length; i++) expect(Math.hypot(positions[i].x - positions[i - 1].x, positions[i].y - positions[i - 1].y)).toBeLessThan(30);
     const received = new Promise<void>(resolve => b.once('chat:message', m => { expect(m.text).toBe('Olá, brejo!'); expect(m.nickname).toBe('Sapão'); expect(m.playerId).toBe(a.id); resolve(); }));
     expect((await send(a, 'Olá, brejo!')).ok).toBe(true); await received;

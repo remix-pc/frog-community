@@ -1,5 +1,5 @@
 import { io, type Socket } from 'socket.io-client';
-import { COLORS, DEFAULT_APPEARANCE, GLASSES, HATS, OUTFITS, parseProfile, type Appearance, type ChatMessage, type ClientEvents, type Player, type Profile, type ServerEvents } from '../shared/protocol';
+import { COLORS, DEFAULT_APPEARANCE, GLASSES, HATS, OUTFITS, parseProfile, type Appearance, type ChatMessage, type ClientEvents, type MapId, type Player, type Profile, type ServerEvents, type WorldState } from '../shared/protocol';
 import { dataSvg, frogSvg } from './art';
 import { createPlaza } from './scene';
 import { ArcadeUI } from './arcade';
@@ -76,6 +76,7 @@ let draftAppearance: Appearance = { ...DEFAULT_APPEARANCE };
 let savingAppearance = false;
 let profile: Profile | null = null, selfId = '', joined = false, joining = false, sending = false;
 let players: Player[] = [], messages: ChatMessage[] = [];
+let currentMap: MapId = 'plaza';
 const muted = new Set<string>();
 let toastTimer: ReturnType<typeof setTimeout>;
 const arcade = new ArcadeUI(socket, controls);
@@ -231,6 +232,33 @@ function renderPeople() {
     list.append(row);
   }
 }
+function applyWorld(state: WorldState) {
+  currentMap = state.mapId;
+  players = state.players; messages = state.messages;
+  scene.setMap(currentMap); scene.clearBubbles(); scene.setPlayers(players);
+  arcade.reset(); firefly.reset();
+  const cinema = currentMap === 'cinema', name = cinema ? 'Cinema do Brejo' : 'Praça do Brejo';
+  const place = cinema ? 'no cinema' : 'na praça';
+  const panel = document.querySelector<HTMLElement>('.world-panel')!;
+  panel.dataset.mapId = currentMap;
+  panel.setAttribute('aria-label', `${name}: clique no chão para andar${cinema ? ' ou em uma cadeira para sentar' : ''}`);
+  document.querySelector('.location-card h1')!.textContent = name;
+  document.querySelector('.live-dot')!.setAttribute('title', `${name} online`);
+  // Preserve the count element and its identity when changing the tab label.
+  const peopleLabel = [...el('people-tab').childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+  if (peopleLabel) peopleLabel.textContent = cinema ? 'No cinema ' : 'Na praça ';
+  document.querySelector('label[for="message-input"]')!.textContent = cinema ? 'Mensagem para o cinema' : 'Mensagem para a praça';
+  el<HTMLTextAreaElement>('message-input').placeholder = cinema ? 'Converse com os sapos do cinema…' : 'Fale com os sapos da praça…';
+  el('game-chat').setAttribute('aria-label', cinema ? 'Chat dentro do cinema' : 'Chat dentro da praça');
+  el('self-detail').textContent = `De boa ${place}`;
+  el('leave-button').setAttribute('aria-label', cinema ? 'Sair do cinema' : 'Sair da praça');
+  el('leave-button').title = cinema ? 'Sair do cinema' : 'Sair da praça';
+  document.querySelector('.world-help')!.innerHTML = cinema
+    ? 'Clique em uma cadeira para sentar<span class="help-separator"></span>No chão para levantar'
+    : '<span class="mouse-icon"></span>Clique no chão para explorar<span class="help-separator"></span><kbd>Enter</kbd> para conversar';
+  renderMessages(); renderPeople(); controls();
+  el('messages').scrollTop = el('messages').scrollHeight;
+}
 function openTab(people: boolean) {
   setChatExpanded(true);
   el('chat-panel').hidden = people; el('people-panel').hidden = !people;
@@ -262,8 +290,7 @@ function enter(candidate: Profile) {
       el('entry').removeAttribute('inert'); document.querySelector('.layout')!.setAttribute('inert', ''); controls(); return;
     }
     profile = candidate; selfId = reply.data.selfId; players = reply.data.state.players; messages = reply.data.state.messages; joined = true;
-    scene.setSelf(selfId); scene.setPlayers(players); scene.clearBubbles();
-    arcade.reset(); firefly.reset();
+    scene.setSelf(selfId); applyWorld(reply.data.state);
     el('entry').hidden = true; document.querySelector('.layout')!.removeAttribute('inert');
     el('self-name').textContent = profile.nickname; el('self-detail').textContent = 'De boa na praça'; el<HTMLImageElement>('self-avatar').src = dataSvg(frogSvg(profile.color, profile.appearance));
     try { localStorage.setItem('frog-profile', JSON.stringify(profile)); } catch { /* Preferences are optional. */ }
@@ -279,13 +306,15 @@ el('leave-button').onclick = () => {
   arcade.reset();
   firefly.reset();
   socket.emit('player:leave'); profile = null; selfId = ''; joined = false; players = []; messages = []; muted.clear(); scene.setSelf(''); scene.setPlayers([]); scene.clearBubbles();
+  applyWorld({ mapId: 'plaza', players: [], messages: [] });
   el('entry').hidden = false; document.querySelector('.layout')!.setAttribute('inert', ''); el('self-name').textContent = 'Seu lugar está aqui'; el('self-detail').textContent = 'Escolha um sapo e entre'; el('entry-error').textContent = ''; el<HTMLTextAreaElement>('message-input').value = ''; updateCount(); renderMessages(); renderPeople(); controls(); el('nickname').focus();
 };
 socket.on('connect', () => { status('Conectado ao brejo', true); if (profile) enter(profile); controls(); });
 socket.on('disconnect', () => { savingAppearance = false; closeAppearance(); joined = false; joining = false; arcade.reset(); firefly.reset(); players = []; scene.setPlayers([]); scene.clearBubbles(); renderPeople(); status('Reconectando…', false); controls(); });
 socket.on('connect_error', () => { status('Tentando conectar…', false); controls(); });
-socket.on('world:positions', current => { if (joined) { players = current; scene.setPlayers(players); const self = current.find(p => p.id === selfId); if (self) { arcade.update(self); firefly.update(self); } } });
-socket.on('player:joined', player => { if (!joined) return; players = [...players.filter(p => p.id !== player.id), player]; scene.setPlayers(players); renderPeople(); toast(`${player.nickname} deu um pulo na praça.`); });
+socket.on('world:state', state => { if (joined) applyWorld(state); });
+socket.on('world:positions', current => { if (joined) { players = current.filter(p => p.mapId === currentMap); scene.setPlayers(players); const self = players.find(p => p.id === selfId); if (self) { arcade.update(self); firefly.update(self); el('self-detail').textContent = self.seatId ? 'De frente para o telão' : currentMap === 'cinema' ? 'De boa no cinema' : 'De boa na praça'; } } });
+socket.on('player:joined', player => { if (!joined || player.mapId !== currentMap) return; players = [...players.filter(p => p.id !== player.id), player]; scene.setPlayers(players); renderPeople(); toast(`${player.nickname} deu um pulo ${currentMap === 'cinema' ? 'no cinema' : 'na praça'}.`); });
 socket.on('player:appearance', (id, appearance) => {
   players = players.map(player => player.id === id ? { ...player, appearance } : player);
   scene.setPlayers(players); renderPeople();
@@ -295,9 +324,15 @@ socket.on('player:appearance', (id, appearance) => {
   }
 });
 socket.on('player:left', id => { players = players.filter(p => p.id !== id); scene.setPlayers(players); renderPeople(); });
-socket.on('chat:message', message => { if (!joined) return; messages.push(message); if (messages.length > 50) messages.shift(); renderMessages(); if (!muted.has(message.playerId)) scene.showBubble(message.playerId, message.text); });
+socket.on('chat:message', message => { if (!joined || message.mapId !== currentMap) return; messages.push(message); if (messages.length > 50) messages.shift(); renderMessages(); if (!muted.has(message.playerId)) scene.showBubble(message.playerId, message.text); });
 socket.on('game:error', toast);
 scene.onMove = point => { if (joined && socket.connected) socket.emit('player:move', point); };
+scene.onSit = seatId => {
+  if (!joined || !socket.connected) return;
+  socket.timeout(5000).emit('player:sit', seatId, (error, reply) => {
+    if (error || !reply?.ok) toast(error ? 'Não foi possível confirmar a cadeira. Tente novamente.' : !reply.ok ? reply.error : '');
+  });
+};
 scene.onInvalid = () => toast('Escolha um ponto no caminho ou na grama.');
 const input = el<HTMLTextAreaElement>('message-input');
 function updateCount() { el('message-count').textContent = `${input.value.length} / 200`; }

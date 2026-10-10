@@ -64,6 +64,7 @@ export class FireflyUI {
   private get<T extends HTMLElement = HTMLElement>(selector: string) { return this.dialog.querySelector<T>(selector)!; }
   get active() { return this.dialog.open; }
   update(player: Player) {
+    if (player.mapId !== 'plaza') { this.proximity.reset(); this.prompt.hidden = true; return; }
     if (this.active) return;
     const action = this.proximity.update(player);
     if (action === 'open') this.prompt.hidden = false;

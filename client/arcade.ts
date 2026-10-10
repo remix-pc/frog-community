@@ -69,6 +69,7 @@ export class ArcadeUI {
   private get<T extends HTMLElement = HTMLElement>(selector: string) { return this.dialog.querySelector<T>(selector)!; }
   get active() { return this.dialog.open; }
   update(player: Player) {
+    if (player.mapId !== 'plaza') { this.proximity.reset(); this.prompt.hidden = true; return; }
     this.color = player.color;
     this.appearance = player.appearance;
     if (this.active) return;

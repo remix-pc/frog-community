@@ -28,10 +28,11 @@ export type Appearance = {
 };
 export const DEFAULT_APPEARANCE: Appearance = { outfit: null, glasses: null, hat: null };
 export type Point = { x: number; y: number };
+export type MapId = 'plaza' | 'cinema';
 export type Profile = { nickname: string; color: string; appearance: Appearance };
-export type Player = Profile & Point & { id: string; moving: boolean; facing: number };
-export type ChatMessage = { id: string; playerId: string; nickname: string; color: string; appearance: Appearance; text: string; sentAt: number };
-export type WorldState = { players: Player[]; messages: ChatMessage[] };
+export type Player = Profile & Point & { id: string; moving: boolean; facing: number; mapId: MapId; seatId: string | null };
+export type ChatMessage = { id: string; playerId: string; nickname: string; color: string; appearance: Appearance; text: string; sentAt: number; mapId: MapId };
+export type WorldState = { mapId: MapId; players: Player[]; messages: ChatMessage[] };
 export type Reply<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 export interface ClientEvents {
   'firefly:start': (reply: (result: Reply<FireflyState>) => void) => void;
@@ -44,10 +45,12 @@ export interface ClientEvents {
   'player:join': (profile: Profile, reply: (result: Reply<{ selfId: string; state: WorldState }>) => void) => void;
   'player:appearance': (appearance: Appearance, reply: (result: Reply<Appearance>) => void) => void;
   'player:move': (destination: Point) => void;
+  'player:sit': (seatId: string, reply: (result: Reply) => void) => void;
   'chat:send': (text: string, reply: (result: Reply) => void) => void;
   'player:leave': () => void;
 }
 export interface ServerEvents {
+  'world:state': (state: WorldState) => void;
   'firefly:state': (state: FireflyState) => void;
   'arcade:state': (state: ArcadeState) => void;
   'arcade:ranking': (ranking: ArcadeRanking) => void;
