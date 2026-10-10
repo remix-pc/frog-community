@@ -1,4 +1,5 @@
 import type { ArcadeJump, ArcadeRanking, ArcadeState } from './arcade.js';
+import type { FireflyHit, FireflyState } from './firefly.js';
 export const COLORS = [
   { name: 'Folha', hex: '#80b85c' }, { name: 'Menta', hex: '#65b79b' },
   { name: 'Lago', hex: '#66b6cd' }, { name: 'Lavanda', hex: '#aa91c9' },
@@ -33,6 +34,9 @@ export type ChatMessage = { id: string; playerId: string; nickname: string; colo
 export type WorldState = { players: Player[]; messages: ChatMessage[] };
 export type Reply<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 export interface ClientEvents {
+  'firefly:start': (reply: (result: Reply<FireflyState>) => void) => void;
+  'firefly:hit': (hit: FireflyHit, reply: (result: Reply<FireflyState>) => void) => void;
+  'firefly:leave': () => void;
   'arcade:start': (reply: (result: Reply<ArcadeState>) => void) => void;
   'arcade:jump': (jump: ArcadeJump, reply: (result: Reply<ArcadeState>) => void) => void;
   'arcade:leave': () => void;
@@ -44,6 +48,7 @@ export interface ClientEvents {
   'player:leave': () => void;
 }
 export interface ServerEvents {
+  'firefly:state': (state: FireflyState) => void;
   'arcade:state': (state: ArcadeState) => void;
   'arcade:ranking': (ranking: ArcadeRanking) => void;
   'world:positions': (players: Player[]) => void;

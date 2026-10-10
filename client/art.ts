@@ -1,4 +1,4 @@
-import { BENCHES, POND, ROCKS, SIGN, TREES } from '../shared/world';
+import { BENCHES, LAMPS, POND, ROCKS, SIGN, TREES } from '../shared/world';
 import { DEFAULT_APPEARANCE, type Appearance } from '../shared/protocol';
 const svg = (width: number, height: number, body: string) => `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`;
 // Phaser's SVG loader decodes base64 as a binary string. XML entities preserve accents
@@ -78,6 +78,38 @@ export function arcadeSvg(): string {
     <ellipse cx="53" cy="76" rx="15" ry="4" fill="#80b85c"/>
     <path d="M43 70Q40 58 48 60Q53 55 58 60Q66 58 63 70Z" fill="#c4d695"/>
     <circle cx="48" cy="62" r="2" fill="#fffbea"/><circle cx="58" cy="62" r="2" fill="#fffbea"/>`);
+}
+export function fireflyCabinetSvg(): string {
+  return svg(88, 125, `<ellipse cx="44" cy="116" rx="39" ry="8" fill="#355c48" opacity=".2"/>
+    <g stroke="#365b44" stroke-width="3" stroke-linejoin="round">
+      <path d="M13 11H70L79 30V110L68 119H17L9 111V74L16 55Z" fill="#a39369"/>
+      <path d="M70 11L79 30V110L68 119V78L62 57Z" fill="#736e55"/>
+      <path d="M13 11H70L68 30H14Z" fill="#e9d989"/>
+      <path d="M19 36H65L62 68H17Z" fill="#264c48"/>
+      <path d="M17 69H63L72 83H10Z" fill="#c5b987"/>
+      <path d="M10 83H72L68 116H17Z" fill="#a6966a"/>
+      <circle cx="31" cy="75" r="4" fill="#e4d77c"/>
+      <circle cx="52" cy="76" r="4" fill="#d9898b"/>
+    </g>
+    <text x="41" y="25" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="7" font-weight="bold" fill="#365b44">VAGALUMES</text>
+    <circle cx="39" cy="50" r="9" fill="#d7d771" opacity=".35"/><circle cx="39" cy="50" r="5" fill="#fff3a5"/><path d="M28 49l-8-5m30 4 8-6M33 58l-5 5m18-5 5 5" stroke="#e7dea3" stroke-width="2"/>`);
+}
+export function lampSvg(): string {
+  return svg(58, 125, `<ellipse cx="29" cy="117" rx="17" ry="6" fill="#355b44" opacity=".2"/>
+    <path d="M22 114h14l-3-9h-8Z" fill="#52634f" stroke="#3d5548" stroke-width="2"/>
+    <path d="M26 106V29h6v77Z" fill="#718368" stroke="#3d5548" stroke-width="2"/>
+    <path d="M19 31h20l-3 21H22Z" fill="#fff1ba" stroke="#58745a" stroke-width="3"/>
+    <path d="M16 31h26l-5-7H21Z" fill="#647b59" stroke="#3d5548" stroke-width="2"/>
+    <path d="M25 24v-5h8v5" fill="#8a9a69" stroke="#3d5548" stroke-width="2"/>
+    <path d="M22 44h14" stroke="#d6c77e" stroke-width="2"/>`);
+}
+export function lampGlowSvg(): string {
+  return svg(300, 300, `<defs><radialGradient id="glow"><stop stop-color="#fff4b3" stop-opacity=".55"/><stop offset=".25" stop-color="#f9e69d" stop-opacity=".28"/><stop offset="1" stop-color="#f9e69d" stop-opacity="0"/></radialGradient></defs>
+    <circle cx="150" cy="150" r="149" fill="url(#glow)"/><circle cx="150" cy="150" r="9" fill="#fff6c8" opacity=".85"/>`);
+}
+export function nightOverlaySvg(): string {
+  const holes = LAMPS.map(l => `<circle cx="${l.x}" cy="${l.y - 83}" r="170" fill="url(#hole)"/>`).join('');
+  return svg(1200, 800, `<defs><radialGradient id="hole"><stop stop-color="#1e1e1e"/><stop offset=".35" stop-color="#666"/><stop offset="1" stop-color="#fff"/></radialGradient><mask id="lamps" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="800"><rect width="1200" height="800" fill="#fff"/>${holes}</mask></defs><rect width="1200" height="800" fill="#102841" fill-opacity=".66" mask="url(#lamps)"/>`);
 }
 export function groundSvg(): string {
   let details = '';

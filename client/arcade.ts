@@ -39,7 +39,7 @@ export class ArcadeUI {
       <p data-status role="status" class="arcade-status">Preparando o salto…</p>
       <div class="arcade-actions" data-controls><button type="button" data-left aria-label="Saltar para a esquerda">← Esquerda</button><button type="button" data-right aria-label="Saltar para a direita">Direita →</button></div>
       <div class="arcade-actions" data-finished hidden><button type="button" data-retry>Jogar novamente</button><button type="button" data-back>Voltar ao brejo</button></div></section>
-      <aside class="arcade-ranking"><span class="arcade-eyebrow">OS GRANDES SALTADORES</span><h3>Ranking do brejo</h3><p data-best>Seu recorde: —</p><ol data-ranking></ol><p data-ranking-status role="status">Carregando ranking…</p><small>Melhor resultado por apelido.<br/>Os recordes ficam salvos.</small></aside></div>`;
+      <aside class="arcade-ranking"><span class="arcade-eyebrow">OS GRANDES JOGADORES</span><h3>Ranking do brejo</h3><p data-best>Seu recorde: —</p><ol data-ranking></ol><p data-ranking-status role="status">Carregando ranking…</p><small>Vale a maior partida em qualquer fliperama.<br/>Os recordes ficam salvos.</small></aside></div>`;
     document.body.append(this.dialog);
     this.get<HTMLButtonElement>('[data-close]').onclick = () => this.close();
     this.get<HTMLButtonElement>('[data-back]').onclick = () => this.close();

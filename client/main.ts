@@ -3,9 +3,12 @@ import { COLORS, DEFAULT_APPEARANCE, GLASSES, HATS, OUTFITS, parseProfile, type 
 import { dataSvg, frogSvg } from './art';
 import { createPlaza } from './scene';
 import { ArcadeUI } from './arcade';
+import { FireflyUI } from './firefly';
+import { isNightInSaoPaulo } from './time';
 import './style.css';
 import './game-chat.css';
 import './appearance.css';
+import './time.css';
 
 const icons = {
   chat: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 1-8 8H5l-4 3 1.7-6A8 8 0 1 1 20 11Z"/><path d="M7 10h8M7 14h5"/></svg>',
@@ -26,7 +29,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <section class="world-panel" aria-label="Praça do Brejo: clique na grama ou no caminho para andar">
       <div id="world"></div>
       <div class="location-card"><span class="location-icon">${icons.leaf}</span><div><small>SEU PONTO DE ENCONTRO</small><h1>Praça do Brejo</h1></div><span class="live-dot" title="Praça online"></span></div>
-      <div class="world-caption"><span class="sun-symbol">☀</span> Uma boa tarde para dar um pulo.</div>
+      <div class="world-caption" id="world-caption"><span class="sun-symbol">☀</span><span id="world-time-label">Um bom dia para dar um pulo.</span></div>
       <div class="world-help"><span class="mouse-icon"></span>Clique no chão para explorar<span class="help-separator"></span><kbd>Enter</kbd> para conversar</div>
       <div id="toast" class="toast" role="status" hidden></div>
       <div class="world-signature">DEVAGAR TAMBÉM É UM CAMINHO.</div>
@@ -56,6 +59,17 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 function el<T extends HTMLElement = HTMLElement>(id: string) { return document.getElementById(id)! as T; }
 const socket: Socket<ServerEvents, ClientEvents> = io({ autoConnect: true, reconnection: true });
 const { scene } = createPlaza(el('world'));
+function updateTimeOfDay() {
+  const night = isNightInSaoPaulo();
+  scene.setNight(night);
+  document.querySelector<HTMLElement>('.world-panel')!.dataset.timeOfDay = night ? 'night' : 'day';
+  el('world-caption').dataset.timeOfDay = night ? 'night' : 'day';
+  el('world-caption').querySelector('.sun-symbol')!.textContent = night ? '☾' : '☀';
+  el('world-time-label').textContent = night ? 'Uma boa noite para dar um pulo.' : 'Um bom dia para dar um pulo.';
+}
+updateTimeOfDay();
+setInterval(updateTimeOfDay, 30_000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) updateTimeOfDay(); });
 let selectedColor: string = COLORS[0].hex;
 let selectedAppearance: Appearance = { ...DEFAULT_APPEARANCE };
 let draftAppearance: Appearance = { ...DEFAULT_APPEARANCE };
@@ -65,6 +79,7 @@ let players: Player[] = [], messages: ChatMessage[] = [];
 const muted = new Set<string>();
 let toastTimer: ReturnType<typeof setTimeout>;
 const arcade = new ArcadeUI(socket, controls);
+const firefly = new FireflyUI(socket, controls, () => !arcade.active && !appearanceDialog.open);
 const appearanceDialog = el<HTMLDialogElement>('appearance-dialog');
 try { const saved = parseProfile(JSON.parse(localStorage.getItem('frog-profile') || 'null')); if (saved) { el<HTMLInputElement>('nickname').value = saved.nickname; selectedColor = saved.color; selectedAppearance = saved.appearance; } } catch { /* Storage may be unavailable in private browsers. */ }
 const appearanceGroups = [
@@ -149,7 +164,7 @@ function commitAppearance(appearance: Appearance) {
 }
 function closeAppearance() { if (savingAppearance) return; if (appearanceDialog.open) appearanceDialog.close(); controls(); }
 el('customize-button').onclick = () => {
-  if (!joined || !profile || !socket.connected || arcade.active) return;
+  if (!joined || !profile || !socket.connected || arcade.active || firefly.active) return;
   draftAppearance = { ...profile.appearance };
   el('appearance-error').textContent = '';
   updateDialogPreview();
@@ -176,8 +191,8 @@ function toast(message: string) { el('toast').textContent = message; el('toast')
 function status(text: string, online: boolean) { el('connection-label').textContent = text; document.querySelector('.connection')!.classList.toggle('online', online); }
 function controls() {
   const ready = joined && socket.connected;
-  scene.setEnabled(ready && !arcade.active && !appearanceDialog.open); el<HTMLTextAreaElement>('message-input').disabled = !ready; el<HTMLButtonElement>('send-button').disabled = !ready || sending; el<HTMLButtonElement>('leave-button').disabled = !profile;
-  el<HTMLButtonElement>('customize-button').disabled = !ready || arcade.active;
+  scene.setEnabled(ready && !arcade.active && !firefly.active && !appearanceDialog.open); el<HTMLTextAreaElement>('message-input').disabled = !ready; el<HTMLButtonElement>('send-button').disabled = !ready || sending; el<HTMLButtonElement>('leave-button').disabled = !profile;
+  el<HTMLButtonElement>('customize-button').disabled = !ready || arcade.active || firefly.active;
   el<HTMLButtonElement>('appearance-save').disabled = !ready || savingAppearance;
   el<HTMLButtonElement>('appearance-cancel').disabled = savingAppearance;
   el<HTMLButtonElement>('appearance-close').disabled = savingAppearance;
@@ -248,7 +263,7 @@ function enter(candidate: Profile) {
     }
     profile = candidate; selfId = reply.data.selfId; players = reply.data.state.players; messages = reply.data.state.messages; joined = true;
     scene.setSelf(selfId); scene.setPlayers(players); scene.clearBubbles();
-    arcade.reset();
+    arcade.reset(); firefly.reset();
     el('entry').hidden = true; document.querySelector('.layout')!.removeAttribute('inert');
     el('self-name').textContent = profile.nickname; el('self-detail').textContent = 'De boa na praça'; el<HTMLImageElement>('self-avatar').src = dataSvg(frogSvg(profile.color, profile.appearance));
     try { localStorage.setItem('frog-profile', JSON.stringify(profile)); } catch { /* Preferences are optional. */ }
@@ -262,13 +277,14 @@ el('entry-form').addEventListener('submit', event => {
 el('leave-button').onclick = () => {
   closeAppearance();
   arcade.reset();
+  firefly.reset();
   socket.emit('player:leave'); profile = null; selfId = ''; joined = false; players = []; messages = []; muted.clear(); scene.setSelf(''); scene.setPlayers([]); scene.clearBubbles();
   el('entry').hidden = false; document.querySelector('.layout')!.setAttribute('inert', ''); el('self-name').textContent = 'Seu lugar está aqui'; el('self-detail').textContent = 'Escolha um sapo e entre'; el('entry-error').textContent = ''; el<HTMLTextAreaElement>('message-input').value = ''; updateCount(); renderMessages(); renderPeople(); controls(); el('nickname').focus();
 };
 socket.on('connect', () => { status('Conectado ao brejo', true); if (profile) enter(profile); controls(); });
-socket.on('disconnect', () => { savingAppearance = false; closeAppearance(); joined = false; joining = false; arcade.reset(); players = []; scene.setPlayers([]); scene.clearBubbles(); renderPeople(); status('Reconectando…', false); controls(); });
+socket.on('disconnect', () => { savingAppearance = false; closeAppearance(); joined = false; joining = false; arcade.reset(); firefly.reset(); players = []; scene.setPlayers([]); scene.clearBubbles(); renderPeople(); status('Reconectando…', false); controls(); });
 socket.on('connect_error', () => { status('Tentando conectar…', false); controls(); });
-socket.on('world:positions', current => { if (joined) { players = current; scene.setPlayers(players); const self = current.find(p => p.id === selfId); if (self) arcade.update(self); } });
+socket.on('world:positions', current => { if (joined) { players = current; scene.setPlayers(players); const self = current.find(p => p.id === selfId); if (self) { arcade.update(self); firefly.update(self); } } });
 socket.on('player:joined', player => { if (!joined) return; players = [...players.filter(p => p.id !== player.id), player]; scene.setPlayers(players); renderPeople(); toast(`${player.nickname} deu um pulo na praça.`); });
 socket.on('player:appearance', (id, appearance) => {
   players = players.map(player => player.id === id ? { ...player, appearance } : player);
@@ -298,7 +314,7 @@ function sendMessage() {
 el('chat-form').addEventListener('submit', event => { event.preventDefault(); sendMessage(); });
 input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); sendMessage(); } });
 document.addEventListener('keydown', event => {
-  if (arcade.active || appearanceDialog.open) return;
+  if (arcade.active || firefly.active || appearanceDialog.open) return;
   if (event.key === 'Enter' && joined && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement) && !(event.target instanceof HTMLButtonElement)) { event.preventDefault(); openTab(false); input.focus(); }
   if (event.key === 'Escape' && joined) input.blur();
   if (event.key === 'Tab' && !el('entry').hidden) {

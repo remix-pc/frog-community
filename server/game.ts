@@ -6,7 +6,9 @@ import { Server } from 'socket.io';
 import { parseAppearance, parseMessage, parseProfile, type ClientEvents, type ServerEvents, type Player, type Point, type ChatMessage } from '../shared/protocol.js';
 import { findPath, SPAWN, WORLD } from '../shared/world.js';
 import { ARCADE, arcadeDistance } from '../shared/arcade.js';
+import { FIREFLY } from '../shared/firefly.js';
 import { ArcadeRound, ArcadeScoreStore } from './arcade.js';
+import { FireflyRound } from './firefly.js';
 
 export function createGameServer(options: { scorePath?: string; arcadeNow?: () => number } = {}) {
   const app = express();
@@ -16,11 +18,21 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
   const paths = new Map<string, Point[]>();
   const messages: ChatMessage[] = [];
   const rounds = new Map<string, ArcadeRound>();
+  const fireflyRounds = new Map<string, FireflyRound>();
   const scores = new ArcadeScoreStore(options.scorePath);
   const finishRound = (id: string, round: ArcadeRound) => {
     if (rounds.get(id) !== round || round.status === 'playing') return;
     rounds.delete(id);
     io.to(id).emit('arcade:state', round.snapshot());
+    const player = players.get(id);
+    if (player) void scores.record(player.nickname, round.score).then(async () => {
+      for (const current of players.values()) io.to(current.id).emit('arcade:ranking', await scores.ranking(current.nickname));
+    });
+  };
+  const finishFirefly = (id: string, round: FireflyRound) => {
+    if (fireflyRounds.get(id) !== round || round.status === 'playing') return;
+    fireflyRounds.delete(id);
+    io.to(id).emit('firefly:state', round.snapshot());
     const player = players.get(id);
     if (player) void scores.record(player.nickname, round.score).then(async () => {
       for (const current of players.values()) io.to(current.id).emit('arcade:ranking', await scores.ranking(current.nickname));
@@ -32,6 +44,7 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
     let lastMessage = 0, lastMove = 0;
     const leave = () => {
       rounds.delete(socket.id);
+      fireflyRounds.delete(socket.id);
       paths.delete(socket.id);
       if (players.delete(socket.id)) io.to('plaza').emit('player:left', socket.id);
       void socket.leave('plaza');
@@ -54,7 +67,7 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
       if (typeof reply !== 'function') return;
       const player = players.get(socket.id);
       if (!player) return reply({ ok: false, error: 'Entre na praça para personalizar seu sapo.' });
-      if (rounds.has(socket.id)) return reply({ ok: false, error: 'Termine a partida antes de personalizar seu sapo.' });
+      if (rounds.has(socket.id) || fireflyRounds.has(socket.id)) return reply({ ok: false, error: 'Termine a partida antes de personalizar seu sapo.' });
       const appearance = parseAppearance(input);
       if (!appearance) return reply({ ok: false, error: 'Escolha roupas e acessórios disponíveis.' });
       player.appearance = appearance;
@@ -63,7 +76,7 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
     });
     socket.on('player:move', destination => {
       const player = players.get(socket.id), now = Date.now();
-      if (!player || rounds.has(socket.id) || now - lastMove < 80) return;
+      if (!player || rounds.has(socket.id) || fireflyRounds.has(socket.id) || now - lastMove < 80) return;
       lastMove = now;
       if (!destination || typeof destination.x !== 'number' || typeof destination.y !== 'number') return;
       const path = findPath(player, destination);
@@ -73,8 +86,8 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
     socket.on('arcade:start', reply => {
       if (typeof reply !== 'function') return;
       const player = players.get(socket.id);
+      if (rounds.has(socket.id) || fireflyRounds.has(socket.id)) return reply({ ok: false, error: 'Você já está jogando.' });
       if (!player || arcadeDistance(player) > ARCADE.enterRadius) return reply({ ok: false, error: 'Chegue perto do fliperama para jogar.' });
-      if (rounds.has(socket.id)) return reply({ ok: false, error: 'Você já está jogando.' });
       paths.delete(socket.id); player.moving = false;
       const round = new ArcadeRound(options.arcadeNow); rounds.set(socket.id, round);
       reply({ ok: true, data: round.snapshot() });
@@ -89,6 +102,28 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
       reply({ ok: true, data: round.snapshot() });
     });
     socket.on('arcade:leave', () => { rounds.delete(socket.id); });
+    socket.on('firefly:start', reply => {
+      if (typeof reply !== 'function') return;
+      const player = players.get(socket.id);
+      if (rounds.has(socket.id) || fireflyRounds.has(socket.id)) return reply({ ok: false, error: 'Você já está jogando.' });
+      if (!player || arcadeDistance(player, FIREFLY) > FIREFLY.enterRadius) return reply({ ok: false, error: 'Chegue perto do fliperama para jogar.' });
+      paths.delete(socket.id); player.moving = false;
+      const round = new FireflyRound(options.arcadeNow); fireflyRounds.set(socket.id, round);
+      reply({ ok: true, data: round.snapshot() });
+    });
+    socket.on('firefly:hit', (input, reply) => {
+      if (typeof reply !== 'function') return;
+      const round = fireflyRounds.get(socket.id);
+      if (!round) return reply({ ok: false, error: 'Esta partida já terminou.' });
+      const accepted = round.hit(input);
+      finishFirefly(socket.id, round);
+      if (!accepted) {
+        if (round.status === 'playing') socket.emit('firefly:state', round.snapshot());
+        return reply({ ok: false, error: 'Aguarde o próximo vagalume.' });
+      }
+      reply({ ok: true, data: round.snapshot() });
+    });
+    socket.on('firefly:leave', () => { fireflyRounds.delete(socket.id); });
     socket.on('arcade:ranking', reply => {
       const player = players.get(socket.id);
       if (typeof reply !== 'function') return;
@@ -114,6 +149,12 @@ export function createGameServer(options: { scorePath?: string; arcadeNow?: () =
   let previous = performance.now();
   const timer = setInterval(() => {
     for (const [id, round] of rounds) { round.expire(); finishRound(id, round); }
+    for (const [id, round] of fireflyRounds) {
+      if (round.advance()) {
+        if (round.status === 'playing') io.to(id).emit('firefly:state', round.snapshot());
+        else finishFirefly(id, round);
+      }
+    }
     const now = performance.now(), delta = Math.min((now - previous) / 1000, 0.2); previous = now;
     for (const player of players.values()) {
       const path = paths.get(player.id);

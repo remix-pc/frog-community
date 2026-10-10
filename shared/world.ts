@@ -1,5 +1,6 @@
 import type { Point } from './protocol.js';
 import { ARCADE } from './arcade.js';
+import { FIREFLY } from './firefly.js';
 export const WORLD = { width: 1200, height: 800, cell: 20, speed: 135 };
 export const SPAWN = { x: 550, y: 490 };
 // These footprints are also used to draw the scenery. Positions are frog foot points.
@@ -14,14 +15,17 @@ export const TREES = [
 export const ROCKS = [{ x: 731, y: 192, rx: 35, ry: 24 }, { x: 1130, y: 490, rx: 32, ry: 20 }, { x: 330, y: 638, rx: 25, ry: 18 }];
 export const BENCHES = [{ x: 320, y: 300 }, { x: 790, y: 615 }];
 export const SIGN = { x: 475, y: 235 };
+export const LAMPS = [{ x: 250, y: 400 }, { x: 690, y: 440 }, { x: 840, y: 650 }, { x: 500, y: 700 }];
 export const inEllipse = (p: Point, x: number, y: number, rx: number, ry: number) => ((p.x - x) / rx) ** 2 + ((p.y - y) / ry) ** 2 <= 1;
 export function isWalkable(p: Point): boolean {
   if (Math.abs(p.x - ARCADE.x) < 48 && Math.abs(p.y - ARCADE.y) < 28) return false;
+  if (Math.abs(p.x - FIREFLY.x) < 35 && Math.abs(p.y - FIREFLY.y) < 22) return false;
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 30 || p.y < 100 || p.x > 1170 || p.y > 770) return false;
   if (inEllipse(p, POND.x, POND.y, POND.rx + 20, POND.ry + 20)) return false;
   if (TREES.some(t => inEllipse(p, t.x, t.y, 36 * t.scale, 25 * t.scale))) return false;
   if (ROCKS.some(r => inEllipse(p, r.x, r.y, r.rx + 14, r.ry + 14))) return false;
   if (BENCHES.some(b => Math.abs(p.x - b.x) < 70 && Math.abs(p.y - b.y) < 28)) return false;
+  if (LAMPS.some(l => Math.hypot(p.x - l.x, p.y - l.y) < 13)) return false;
   return !(Math.abs(p.x - SIGN.x) < 65 && Math.abs(p.y - SIGN.y) < 22);
 }
 export function segmentWalkable(a: Point, b: Point): boolean {

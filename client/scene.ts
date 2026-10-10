@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import { COLORS, GLASSES, HATS, OUTFITS, type Appearance, type Player, type Point } from '../shared/protocol';
-import { isWalkable, TREES, WORLD } from '../shared/world';
-import { arcadeSvg, dataSvg, frogSvg, glassesSvg, groundSvg, hatSvg, outfitSvg, treeSvg } from './art';
+import { isWalkable, LAMPS, TREES, WORLD } from '../shared/world';
+import { arcadeSvg, dataSvg, fireflyCabinetSvg, frogSvg, glassesSvg, groundSvg, hatSvg, lampGlowSvg, lampSvg, nightOverlaySvg, outfitSvg, treeSvg } from './art';
 import { ARCADE } from '../shared/arcade';
+import { FIREFLY } from '../shared/firefly';
 
 type Avatar = { root: Phaser.GameObjects.Container; visual: Phaser.GameObjects.Container; base: Phaser.GameObjects.Image; layers: Record<keyof Appearance, Phaser.GameObjects.Image>; rendered: string; target: Player; phase: number };
 export class PlazaScene extends Phaser.Scene {
@@ -14,11 +15,18 @@ export class PlazaScene extends Phaser.Scene {
   private focusRing?: Phaser.GameObjects.Ellipse;
   private destination?: Phaser.GameObjects.Arc;
   private bubbles = new Map<string, { object: Phaser.GameObjects.Container; expires: number }>();
+  private night = false;
+  private nightOverlay?: Phaser.GameObjects.Image;
+  private lampGlows: Phaser.GameObjects.Image[] = [];
   onMove: (point: Point) => void = () => {};
   onInvalid: () => void = () => {};
   constructor() { super('plaza'); }
   preload() {
     this.load.svg('arcade', dataSvg(arcadeSvg()));
+    this.load.svg('firefly-cabinet', dataSvg(fireflyCabinetSvg()));
+    this.load.svg('lamp', dataSvg(lampSvg()));
+    this.load.svg('lamp-glow', dataSvg(lampGlowSvg()));
+    this.load.svg('night-overlay', dataSvg(nightOverlaySvg()));
     this.load.svg('ground', dataSvg(groundSvg()));
     this.load.svg('tree', dataSvg(treeSvg()));
     COLORS.forEach(c => this.load.svg(c.hex, dataSvg(frogSvg(c.hex))));
@@ -29,6 +37,8 @@ export class PlazaScene extends Phaser.Scene {
   create() {
     this.add.image(0, 0, 'ground').setOrigin(0);
     this.add.image(ARCADE.x, ARCADE.y + 12, 'arcade').setOrigin(0.5, 1).setDepth(ARCADE.y);
+    this.add.image(FIREFLY.x, FIREFLY.y + 9, 'firefly-cabinet').setOrigin(0.5, 1).setDepth(FIREFLY.y);
+    LAMPS.forEach(lamp => this.add.image(lamp.x, lamp.y + 5, 'lamp').setOrigin(0.5, 1).setDepth(lamp.y));
     TREES.forEach(t => this.add.image(t.x, t.y + 17 * t.scale, 'tree').setOrigin(0.5, 1).setScale(t.scale).setDepth(t.y));
     // Subtle glints drift across the pond; everything remains readable at rest.
     for (let i = 0; i < 7; i++) {
@@ -37,13 +47,17 @@ export class PlazaScene extends Phaser.Scene {
     }
     this.focusRing = this.add.ellipse(0, 0, 64, 27).setStrokeStyle(2.5, 0xfff6d7).setVisible(false);
     this.destination = this.add.circle(0, 0, 10).setStrokeStyle(2, 0x54744b).setVisible(false);
+    this.nightOverlay = this.add.image(0, 0, 'night-overlay').setOrigin(0).setDepth(2500).setAlpha(0);
+    this.lampGlows = LAMPS.map(lamp => this.add.image(lamp.x, lamp.y - 83, 'lamp-glow').setDepth(2501).setAlpha(0));
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.enabled || pointer.rightButtonDown()) return;
       const clicked = { x: pointer.worldX, y: pointer.worldY };
       // The cabinet is an obstacle. Clicking its art should lead to the playable side.
       const cabinetClicked = Math.abs(clicked.x - ARCADE.x) <= 60 &&
         clicked.y >= ARCADE.y - 158 && clicked.y <= ARCADE.y + 12;
-      const point = cabinetClicked ? ARCADE.interaction : clicked;
+      const fireflyClicked = Math.abs(clicked.x - FIREFLY.x) <= 44 &&
+        clicked.y >= FIREFLY.y - 116 && clicked.y <= FIREFLY.y + 9;
+      const point = cabinetClicked ? ARCADE.interaction : fireflyClicked ? FIREFLY.interaction : clicked;
       if (!isWalkable(point)) { this.onInvalid(); return; }
       this.onMove(point);
       this.destination!.setPosition(point.x, point.y).setVisible(true).setAlpha(1).setScale(0.5);
@@ -51,11 +65,26 @@ export class PlazaScene extends Phaser.Scene {
       this.tweens.add({ targets: this.destination, scale: 1.7, alpha: 0, duration: 700 });
     });
     this.ready = true;
+    this.applyNight(false);
     this.setPlayers(this.pending);
     this.game.canvas.dataset.ready = 'true';
   }
   setSelf(id: string) { this.selfId = id; }
   setEnabled(enabled: boolean) { this.enabled = enabled; }
+  setNight(night: boolean) {
+    if (this.night === night) return;
+    this.night = night;
+    if (this.ready) this.applyNight(true);
+  }
+  private applyNight(animate: boolean) {
+    if (!this.nightOverlay) return;
+    const targets = [this.nightOverlay, ...this.lampGlows];
+    this.tweens.killTweensOf(targets);
+    if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.tweens.add({ targets, alpha: this.night ? 1 : 0, duration: 900 });
+    } else targets.forEach(target => target.setAlpha(this.night ? 1 : 0));
+    this.game.canvas.dataset.timeOfDay = this.night ? 'night' : 'day';
+  }
   setPlayers(players: Player[]) {
     this.pending = players;
     if (!this.ready) return;

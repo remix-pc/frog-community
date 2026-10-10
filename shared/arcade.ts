@@ -13,16 +13,18 @@ export type ArcadeJump = { id: string; sequence: number; direction: Direction };
 export type ArcadeScore = { nickname: string; score: number; achievedAt: number };
 export type ArcadeRanking = { available: boolean; entries: ArcadeScore[]; personalBest: number };
 export const nicknameKey = (name: string) => name.trim().normalize('NFC').toLocaleLowerCase('pt-BR');
-export const arcadeDistance = (p: Point) => Math.hypot(p.x - ARCADE.interaction.x, p.y - ARCADE.interaction.y);
+export type Cabinet = { interaction: Point; enterRadius: number; exitRadius: number };
+export const arcadeDistance = (p: Point, cabinet: Cabinet = ARCADE) => Math.hypot(p.x - cabinet.interaction.x, p.y - cabinet.interaction.y);
 
 // Hysteresis prevents a dismissed invitation from reopening at the boundary.
 export class ArcadeProximity {
   private armed = true;
+  constructor(private cabinet: Cabinet = ARCADE) {}
   reset() { this.armed = true; }
   update(point: Point): 'open' | 'close' | undefined {
-    const distance = arcadeDistance(point);
-    if (distance > ARCADE.exitRadius) this.armed = true;
-    if (distance > ARCADE.enterRadius) return 'close';
+    const distance = arcadeDistance(point, this.cabinet);
+    if (distance > this.cabinet.exitRadius) this.armed = true;
+    if (distance > this.cabinet.enterRadius) return 'close';
     if (this.armed) { this.armed = false; return 'open'; }
   }
 }

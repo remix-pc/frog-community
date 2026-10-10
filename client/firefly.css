@@ -1,0 +1,12 @@
+.firefly-invite{left:32%;top:70%;border-color:#a38d5b}
+.firefly-dialog{border-color:#b3a467}
+.firefly-board{height:274px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px;background:radial-gradient(circle at 50% 30%,#315f54,#1d453f 75%);border-radius:0 0 14px 14px}
+.firefly-board button{position:relative;border:1px solid #64897a;border-radius:12px;background:#386655;color:#d4e9b2;display:grid;place-items:center;overflow:hidden}
+.firefly-board button:hover:not(:disabled){background:#477965}
+.firefly-board button.lit{background:radial-gradient(circle,#f5e9a5 0%,#9fae71 31%,#4c7961 75%);border-color:#f4e4a1;box-shadow:0 0 21px #f6e29a88,inset 0 0 17px #f4e49a88}
+.firefly-light{font-size:30px;opacity:.12;transition:opacity .15s,transform .15s}
+.lit .firefly-light{opacity:1;color:#fff8c7;text-shadow:0 0 14px #fff4b5,0 0 28px #e8dc78;transform:scale(1.15)}
+.firefly-number{position:absolute;right:8px;bottom:5px;font-size:11px;font-weight:bold;opacity:.8}
+@media(max-height:760px){.firefly-board{height:239px}}
+@media(max-width:800px){.firefly-invite{left:50%;top:70%}.firefly-dialog .arcade-layout{grid-template-columns:1fr}.firefly-board{height:250px}.firefly-dialog .arcade-ranking{border-left:0;border-top:1px solid #dbe1c8;padding:12px 0 0}}
+@media(prefers-reduced-motion:reduce){.firefly-light{transition:none}}

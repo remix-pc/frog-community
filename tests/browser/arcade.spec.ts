@@ -64,13 +64,13 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
     await expect(page.locator('.arcade-row')).toHaveCount(5);
     const firstDirection = await page.locator('.arcade-row').last().getAttribute('data-direction');
     await page.getByRole('button', { name: firstDirection === 'left' ? 'Saltar para a esquerda' : 'Saltar para a direita' }).click();
-    await expect(page.locator('[data-score]')).toHaveText('10');
-    await jump(page); await expect(page.locator('[data-score]')).toHaveText('20');
+    await expect(page.locator('#arcade-dialog [data-score]')).toHaveText('10');
+    await jump(page); await expect(page.locator('#arcade-dialog [data-score]')).toHaveText('20');
     await page.screenshot({ path: info.outputPath(`fliperama-jogando-${viewport.width}.png`) });
     await jump(page, false);
-    await expect(page.locator('[data-status]')).toContainText('Splash! Você fez 20 pontos.');
-    await expect(page.locator('[data-best]')).toHaveText('Seu recorde: 20 pontos', { timeout: 10000 });
-    await expect(page.locator('[data-ranking]')).toContainText('Saltador');
+    await expect(page.locator('#arcade-dialog [data-status]')).toContainText('Splash! Você fez 20 pontos.');
+    await expect(page.locator('#arcade-dialog [data-best]')).toHaveText('Seu recorde: 20 pontos', { timeout: 10000 });
+    await expect(page.locator('#arcade-dialog [data-ranking]')).toContainText('Saltador');
     await expect(page.getByRole('button', { name: 'Jogar novamente' })).toBeFocused();
     await page.getByRole('button', { name: 'Sair do fliperama' }).focus();
     await page.keyboard.press('Shift+Tab'); await expect(page.getByRole('button', { name: 'Voltar ao brejo' })).toBeFocused();
@@ -79,7 +79,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
     expect(box.y).toBeGreaterThanOrEqual(0); expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
     await page.screenshot({ path: info.outputPath(`fliperama-resultado-${viewport.width}.png`) });
     await page.getByRole('button', { name: 'Jogar novamente' }).click();
-    await expect(page.locator('[data-score]')).toHaveText('0');
+    await expect(page.locator('#arcade-dialog [data-score]')).toHaveText('0');
     await page.keyboard.press('Escape'); await expect(page.locator('#arcade-dialog')).not.toBeVisible();
     await expect(page.getByLabel('Mensagem para a praça')).toBeFocused();
     await expect(page.locator('#arcade-invite')).toBeHidden();
@@ -94,11 +94,11 @@ test('ranking ao vivo entre jogadores, fim por tempo e desconexão', async ({ br
   try {
     await enter(a, arcadeGame.url, 'Sapo Alfa'); await enter(b, arcadeGame.url, 'Sapo Beta');
     await Promise.all([open(a), open(b)]);
-    await jump(a); await expect(a.locator('[data-score]')).toHaveText('10');
+    await jump(a); await expect(a.locator('#arcade-dialog [data-score]')).toHaveText('10');
     arcadeGame.expire();
-    await expect(a.locator('[data-status]')).toContainText('Tempo esgotado!');
-    await expect(b.locator('[data-ranking]')).toContainText('Sapo Alfa');
-    await expect(b.locator('[data-status]')).toContainText('Tempo esgotado!');
+    await expect(a.locator('#arcade-dialog [data-status]')).toContainText('Tempo esgotado!');
+    await expect(b.locator('#arcade-dialog [data-ranking]')).toContainText('Sapo Alfa');
+    await expect(b.locator('#arcade-dialog [data-status]')).toContainText('Tempo esgotado!');
     await a.getByRole('button', { name: 'Jogar novamente' }).click();
     await expect(a.getByRole('button', { name: 'Saltar para a esquerda' })).toBeEnabled();
     const self = [...arcadeGame.server.io.sockets.sockets.values()][0]; self.conn.close();
