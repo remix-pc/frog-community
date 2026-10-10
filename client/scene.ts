@@ -68,8 +68,6 @@ export class PlazaScene extends Phaser.Scene {
     }
     lamps.forEach(lamp => this.add.image(lamp.x, lamp.y + 5, 'lamp').setOrigin(0.5, 1).setDepth(lamp.y));
     trees.forEach(t => this.add.image(t.x, t.y + 17 * t.scale, 'tree').setOrigin(0.5, 1).setScale(t.scale).setDepth(t.y));
-    const portal = PORTALS[this.mapId];
-    this.add.text(portal.point.x, portal.point.y - 30, portal.label, { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '21px', fontStyle: 'bold', color: '#365941', backgroundColor: '#f4e5b9', padding: { x: 16, y: 9 } }).setOrigin(0.5).setDepth(2503);
     this.focusRing = this.add.ellipse(0, 0, 64, 27).setStrokeStyle(2.5, 0xfff6d7).setVisible(false);
     this.destination = this.add.circle(0, 0, 10).setStrokeStyle(2, 0x54744b).setVisible(false);
     this.nightOverlay = this.add.image(0, 0, 'night-overlay').setOrigin(0).setDepth(2500).setAlpha(0);
@@ -86,7 +84,7 @@ export class PlazaScene extends Phaser.Scene {
       const clicked = { x: pointer.worldX, y: pointer.worldY };
       // The cabinet is an obstacle. Clicking its art should lead to the playable side.
       const portal = PORTALS[this.mapId];
-      const portalClicked = Math.abs(clicked.x - portal.point.x) <= 90 && Math.abs(clicked.y - (portal.point.y - 30)) <= 28;
+      const portalClicked = Math.abs(clicked.x - portal.point.x) <= 90 && Math.abs(clicked.y - portal.point.y) <= 28;
       if (this.mapId === 'cinema' && !portalClicked) {
         const seat = CINEMA_SEATS.find(s => Math.abs(clicked.x - s.x) <= 38 && clicked.y >= s.y - 42 && clicked.y <= s.y + 28);
         if (seat) { this.onSit(seat.id); return; }
@@ -150,7 +148,7 @@ export class PlazaScene extends Phaser.Scene {
         hat: this.add.image(0, 0, player.color).setDisplaySize(73, 67).setVisible(false)
       };
       const visual = this.add.container(0, -29, [base, layers.outfit, layers.glasses, layers.hat]);
-      const label = this.add.text(0, 18, player.nickname + (player.id === this.selfId ? ' · você' : ''), {
+      const label = this.add.text(0, 18, player.nickname, {
         fontFamily: 'Trebuchet MS, sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#294a36', backgroundColor: '#fff9e5', padding: { x: 8, y: 4 }
       }).setOrigin(0.5, 0);
       const root = this.add.container(player.x, player.y, [shadow, visual, label]);

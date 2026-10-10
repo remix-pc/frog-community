@@ -15,7 +15,7 @@ export const TREES = [
 ];
 export const ROCKS = [{ x: 731, y: 192, rx: 35, ry: 24 }, { x: 1130, y: 490, rx: 32, ry: 20 }, { x: 330, y: 638, rx: 25, ry: 18 }];
 export const BENCHES = [{ x: 320, y: 300 }, { x: 790, y: 615 }];
-export const SIGN = { x: 475, y: 235 };
+export const SIGN = { x: 155, y: 315 };
 export const LAMPS = [
   { x: 250, y: 400 }, { x: 550, y: 180 }, { x: 690, y: 440 },
   { x: 840, y: 650 }, { x: 1150, y: 420 }, { x: 500, y: 700 }

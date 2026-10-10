@@ -224,7 +224,7 @@ function renderPeople() {
   const list = el('people-list'); list.replaceChildren();
   for (const player of [...players].sort((a, b) => a.id === selfId ? -1 : b.id === selfId ? 1 : a.nickname.localeCompare(b.nickname))) {
     const row = document.createElement('li'), avatar = document.createElement('img'), name = document.createElement('span');
-    avatar.src = dataSvg(frogSvg(player.color, player.appearance)); avatar.alt = ''; name.textContent = player.nickname + (player.id === selfId ? ' (você)' : ''); row.append(avatar, name);
+    avatar.src = dataSvg(frogSvg(player.color, player.appearance)); avatar.alt = ''; name.textContent = player.nickname; row.append(avatar, name);
     if (player.id !== selfId) {
       const button = document.createElement('button'); button.className = 'icon-button mute-button'; button.innerHTML = icons.soundOff; button.setAttribute('aria-label', `${muted.has(player.id) ? 'Ouvir' : 'Silenciar'} ${player.nickname}`); button.title = muted.has(player.id) ? 'Voltar a ouvir' : 'Silenciar'; button.setAttribute('aria-pressed', String(muted.has(player.id)));
       button.onclick = () => { if (muted.has(player.id)) muted.delete(player.id); else { muted.add(player.id); scene.removeBubble(player.id); } renderMessages(); renderPeople(); }; row.append(button);
