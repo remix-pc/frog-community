@@ -27,7 +27,7 @@ async function walk(page: Page, x: number, y: number) {
 for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
   test(`Pega-Vagalumes e ranking compartilhado ${viewport.width}×${viewport.height}`, async ({ page, fireflyGame }, info) => {
     await page.setViewportSize(viewport); await enter(page, fireflyGame.url);
-    await walk(page, 390, 625);
+    await walk(page, 390, 530);
     await expect(page.locator('#firefly-invite')).toBeVisible();
     await page.screenshot({ path: info.outputPath(`minifliperama-${viewport.width}.png`) });
     await page.locator('#firefly-invite [data-play]').click();
@@ -58,7 +58,7 @@ test('a praça muda do dia para a noite com a página aberta', async ({ page, fi
   await page.clock.runFor(31_000);
   await expect(page.locator('canvas[data-time-of-day=night]')).toBeVisible();
   await expect(page.locator('#world-time-label')).toContainText('noite');
-  await expect(page.locator('.world-panel')).toHaveCSS('background-color', 'rgb(35, 62, 68)');
+  await expect(page.locator('.world-panel')).toHaveCSS('background-color', 'rgb(105, 134, 109)');
   await page.screenshot({ path: info.outputPath('praca-noite.png') });
   await page.clock.setFixedTime(new Date('2026-10-10T09:00:00Z'));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));

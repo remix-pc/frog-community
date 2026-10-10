@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GLASSES, HATS, OUTFITS, type Appearance, type Player, type Point } from '../shared/protocol';
 import { isWalkable, LAMPS, TREES, WORLD } from '../shared/world';
-import { arcadeSvg, dataSvg, fireflyCabinetSvg, frogSvg, glassesSvg, groundSvg, hatSvg, lampGlowSvg, lampSvg, nightOverlaySvg, outfitSvg, treeSvg } from './art';
+import { arcadeSvg, dataSvg, fireflyConsoleSvg, frogSvg, glassesSvg, groundSvg, hatSvg, lampGlowSvg, lampSvg, nightOverlaySvg, outfitSvg, treeSvg } from './art';
 import { ARCADE } from '../shared/arcade';
 import { FIREFLY } from '../shared/firefly';
 
@@ -23,7 +23,7 @@ export class PlazaScene extends Phaser.Scene {
   constructor() { super('plaza'); }
   preload() {
     this.load.svg('arcade', dataSvg(arcadeSvg()));
-    this.load.svg('firefly-cabinet', dataSvg(fireflyCabinetSvg()));
+    this.load.svg('firefly-console', dataSvg(fireflyConsoleSvg()));
     this.load.svg('lamp', dataSvg(lampSvg()));
     this.load.svg('lamp-glow', dataSvg(lampGlowSvg()));
     this.load.svg('night-overlay', dataSvg(nightOverlaySvg()));
@@ -37,7 +37,7 @@ export class PlazaScene extends Phaser.Scene {
   create() {
     this.add.image(0, 0, 'ground').setOrigin(0);
     this.add.image(ARCADE.x, ARCADE.y + 12, 'arcade').setOrigin(0.5, 1).setDepth(ARCADE.y);
-    this.add.image(FIREFLY.x, FIREFLY.y + 9, 'firefly-cabinet').setOrigin(0.5, 1).setDepth(FIREFLY.y);
+    this.add.image(FIREFLY.x, FIREFLY.y + 6, 'firefly-console').setOrigin(0.5, 1).setDepth(FIREFLY.y);
     LAMPS.forEach(lamp => this.add.image(lamp.x, lamp.y + 5, 'lamp').setOrigin(0.5, 1).setDepth(lamp.y));
     TREES.forEach(t => this.add.image(t.x, t.y + 17 * t.scale, 'tree').setOrigin(0.5, 1).setScale(t.scale).setDepth(t.y));
     // Subtle glints drift across the pond; everything remains readable at rest.
@@ -55,8 +55,8 @@ export class PlazaScene extends Phaser.Scene {
       // The cabinet is an obstacle. Clicking its art should lead to the playable side.
       const cabinetClicked = Math.abs(clicked.x - ARCADE.x) <= 60 &&
         clicked.y >= ARCADE.y - 158 && clicked.y <= ARCADE.y + 12;
-      const fireflyClicked = Math.abs(clicked.x - FIREFLY.x) <= 44 &&
-        clicked.y >= FIREFLY.y - 116 && clicked.y <= FIREFLY.y + 9;
+      const fireflyClicked = Math.abs(clicked.x - FIREFLY.x) <= 42 &&
+        clicked.y >= FIREFLY.y - 82 && clicked.y <= FIREFLY.y + 6;
       const point = cabinetClicked ? ARCADE.interaction : fireflyClicked ? FIREFLY.interaction : clicked;
       if (!isWalkable(point)) { this.onInvalid(); return; }
       this.onMove(point);

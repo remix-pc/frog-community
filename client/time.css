@@ -1,3 +1,3 @@
-.world-panel[data-time-of-day=night]{background:#233e44}
+.world-panel[data-time-of-day=night]{background:#69866d}
 .world-caption[data-time-of-day=night]{color:#fff5cc;background:#173c49c9;border:1px solid #fff2bd36;border-radius:18px;padding:5px 11px;z-index:2}
 .world-caption[data-time-of-day=night] .sun-symbol{color:#ffe7a0}

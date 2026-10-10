@@ -45,7 +45,7 @@ Chegue perto da máquina junto ao caminho central e escolha **Jogar** no convite
 
 No **Pulo do Sapo**, siga a vitória-régia mais próxima com as setas **← / →** ou os botões. As próximas cinco folhas ficam visíveis. Cada salto correto vale **10 pontos**, com intervalo de 250 ms. Cair na água ou completar **60 segundos** encerra a partida e registra o resultado. **Escape** ou **Sair do fliperama** cancela a tentativa sem salvar pontos. Durante a partida seu sapo fica parado na praça; outras pessoas podem jogar ao mesmo tempo.
 
-O gabinete menor, na parte inferior esquerda da praça, oferece **Pega-Vagalumes**. Toque no vagalume aceso em uma grade de nove posições ou use as teclas **1–9**. Ele muda de lugar a cada 1,5 segundo ou após uma tentativa. Cada acerto vale 10 pontos; erros não pontuam. A partida dura 60 segundos. Só é possível jogar em um gabinete por vez.
+O pequeno console de mesa, na parte inferior esquerda da praça, oferece **Pega-Vagalumes**. Toque no vagalume aceso em uma grade de nove posições ou use as teclas **1–9**. Ele muda de lugar a cada 1,5 segundo ou após uma tentativa. Cada acerto vale 10 pontos; erros não pontuam. A partida dura 60 segundos. Só é possível jogar em um fliperama por vez.
 
 O ranking único mostra os dez melhores resultados e seu recorde pessoal. O servidor valida as jogadas e guarda apenas a maior pontuação de uma partida em qualquer um dos jogos por apelido, ignorando diferenças entre maiúsculas e minúsculas. Empates favorecem o recorde atingido primeiro. Não há contas: quem reutilizar um apelido compartilha aquele recorde. Os recordes existentes do Pulo do Sapo permanecem válidos.
 
@@ -53,7 +53,7 @@ Os recordes sobrevivem ao reinício em `data/arcade-scores.json`, criado automat
 
 ## Dia e noite na praça
 
-A praça segue o horário de São Paulo (`America/Sao_Paulo`): dia das **06h às 17h59**, noite das **18h às 05h59**. À noite, o cenário escurece e quatro luminárias iluminam os caminhos. A aparência é atualizada automaticamente com a página aberta e ao voltar para a aba. É necessário que o relógio do dispositivo esteja correto.
+A praça segue o horário de São Paulo (`America/Sao_Paulo`): dia das **06h às 17h59**, noite das **18h às 05h59**. À noite, o cenário escurece suavemente e seis luminárias iluminam os caminhos. A aparência é atualizada automaticamente com a página aberta e ao voltar para a aba. É necessário que o relógio do dispositivo esteja correto.
 
 ## Arquitetura e limites
 
