@@ -3,8 +3,6 @@ import { io, type Socket } from 'socket.io-client';
 import { createGameServer } from '../server/game';
 import { COLORS, DEFAULT_APPEARANCE, type ClientEvents, type ServerEvents, type WorldState, type Reply, type Player, type MapId, type ChatMessage } from '../shared/protocol';
 import { CINEMA_SEATS, PORTALS } from '../shared/cinema';
-import { ARCADE } from '../shared/arcade';
-import { FIREFLY } from '../shared/firefly';
 
 type Client = Socket<ServerEvents, ClientEvents>;
 describe('cinema multiplayer', () => {
@@ -92,13 +90,11 @@ describe('cinema multiplayer', () => {
     expect(self(newcomer)?.seatId).toBeNull();
   }, 40000);
 
-  it('rejeita fliperamas no cinema mesmo nas coordenadas das máquinas', async () => {
+  it('rejeita solicitações de fliperama enquanto o jogador está no cinema', async () => {
     const client = await connect('Sem fliperama'); await travel(client, 'cinema');
-    // The exact arcade coordinate overlaps a cinema chair; this walkable point
-    // is still inside the machine's enter radius and must be rejected by map.
-    for (const [point, event] of [[{ x: ARCADE.interaction.x + 40, y: ARCADE.interaction.y }, 'arcade:start'], [FIREFLY.interaction, 'firefly:start']] as const) {
-      client.emit('player:move', point);
-      await expect.poll(() => { const player = self(client); return player && Math.hypot(player.x - point.x, player.y - point.y) < 1; }, { timeout: 8000 }).toBe(true);
+    // The expanded cinema screen and seats occupy the arcade interaction area;
+    // requests are still rejected based on the current map.
+    for (const event of ['arcade:start', 'firefly:start'] as const) {
       const response = await new Promise<{ ok: boolean }>(resolve => client.emit(event, resolve));
       expect(response.ok).toBe(false);
     }

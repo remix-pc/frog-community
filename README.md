@@ -1,6 +1,6 @@
 # Frog Community
 
-Um cantinho do brejo para encontrar amigos. Jogo multiplayer de navegador com uma praça ilustrada, sapos personalizáveis, movimento por clique e conversa pública em tempo real. Todo o desenho é original, feito com SVG; nenhuma imagem ou fonte externa é necessária.
+Um cantinho do brejo para encontrar amigos. Jogo multiplayer de navegador com uma praça ilustrada, sapos personalizáveis, movimento por clique e conversa pública em tempo real. Todo o desenho é original, feito com SVG; a live do cinema é incorporada pelo player da Twitch.
 
 ## Rodar em desenvolvimento
 
@@ -57,11 +57,13 @@ A praça segue o horário de São Paulo (`America/Sao_Paulo`): dia das **06h às
 
 ## Cinema do Brejo
 
-Siga o caminho no topo da praça ou clique na placa **Cinema ↑**. Ao chegar à passagem, seu sapo entra no cinema ao ar livre: um telão gigante, 24 cadeiras voltadas para ele e corredores para circular, sem carros. Para voltar, caminhe até a placa **Praça ↓** na parte inferior do cinema.
+Siga o caminho no topo da praça até o cinema ao ar livre: um telão gigante, 24 cadeiras voltadas para ele e corredores para circular, sem carros. Para voltar, caminhe até a passagem na parte inferior do cinema.
+
+O telão reproduz a live do canal [magunna12022](https://www.twitch.tv/magunna12022) quando ela está no ar; fora do ar, o player informa a disponibilidade do canal. Ele é carregado ao entrar no cinema e começa silenciado. Use os controles da Twitch no próprio telão para ativar o som. O player exige uma área de ao menos 400 × 300 pixels; em janelas menores, a arte de boas-vindas continua visível. O domínio atual é enviado automaticamente como `parent`, requisito de incorporação da Twitch.
 
 Clique em uma cadeira para caminhar até ela e sentar de frente para o telão. A cadeira fica reservada durante o trajeto, e cada assento comporta apenas um sapo. Clique no chão para levantar; escolher outro destino libera a cadeira anterior. Saídas e desconexões também liberam assentos e reservas. A cor e os acessórios continuam visíveis na postura sentada.
 
-Cada mapa tem seus próprios participantes, balões e histórico das últimas 50 mensagens. Ao mudar de espaço, você passa a conversar com quem está naquele local. O cinema acompanha o mesmo ciclo de dia e noite, mantendo o telão iluminado. Nesta versão, a tela exibe uma arte de boas-vindas, sem vídeo ou áudio. Os fliperamas continuam na praça; reconectar retorna à praça, sem guardar mapa ou assento.
+Cada mapa tem seus próprios participantes, balões e histórico das últimas 50 mensagens. Ao mudar de espaço, você passa a conversar com quem está naquele local. O cinema acompanha o mesmo ciclo de dia e noite, mantendo a estrutura do telão iluminada. Os fliperamas continuam na praça; reconectar retorna à praça, sem guardar mapa ou assento.
 
 ## Arquitetura e limites
 

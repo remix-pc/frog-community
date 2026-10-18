@@ -11,12 +11,12 @@ export function cinemaGroundSvg() {
   }
   return svg(1200, 800, `<defs><radialGradient id="lawn"><stop stop-color="#ccdaa5"/><stop offset="1" stop-color="#94b47b"/></radialGradient></defs>
     <rect width="1200" height="800" fill="url(#lawn)"/>${grass}
-    <rect x="374" y="297" width="665" height="368" rx="40" fill="#b7c38b" stroke="#92a771" stroke-width="3"/>
-    <path d="M720 810V310M385 315v355h650V315" fill="none" stroke="#e0d3a7" stroke-width="58" stroke-linejoin="round"/>
-    <path d="M385 315h650" stroke="#e0d3a7" stroke-width="30"/>
+    <rect x="374" y="478" width="665" height="278" rx="40" fill="#b7c38b" stroke="#92a771" stroke-width="3"/>
+    <path d="M720 810V430M385 492v249h650V492" fill="none" stroke="#e0d3a7" stroke-width="58" stroke-linejoin="round"/>
+    <path d="M385 492h650" stroke="#e0d3a7" stroke-width="30"/>
     <path d="M690 730h60m-53-24h46" stroke="#c4b88e" stroke-width="3" stroke-linecap="round"/>
-    <ellipse cx="720" cy="281" rx="354" ry="20" fill="#456044" opacity=".16"/>
-    <g stroke="#685c44" stroke-width="8"><path d="M395 160v120m650-120v120"/></g>
+    <ellipse cx="720" cy="460" rx="354" ry="20" fill="#456044" opacity=".16"/>
+    <g stroke="#685c44" stroke-width="8"><path d="M395 168v295m650-295v295"/></g>
     <g fill="#f4e8b8" stroke="#a4a26c" stroke-width="2">
       ${[380, 490, 600, 840, 950, 1060].map(x => `<circle cx="${x}" cy="690" r="5"/>`).join('')}
     </g>
@@ -27,14 +27,16 @@ export function cinemaGroundSvg() {
 
 export function cinemaScreenSvg() {
   const { width, height } = CINEMA_SCREEN;
+  const innerWidth = width - 32, innerHeight = height - 30;
+  const center = width / 2;
   return svg(width, height, `<defs><linearGradient id="screen" x2="0" y2="1"><stop stop-color="#fffbea"/><stop offset="1" stop-color="#e3e8c5"/></linearGradient></defs>
-    <rect x="3" y="3" width="684" height="219" rx="12" fill="#476451" stroke="#2e4b3c" stroke-width="6"/>
-    <rect x="16" y="15" width="658" height="195" rx="5" fill="url(#screen)"/>
-    <path d="M37 39h30m-30 0v25m616-25h-30m30 0v25M37 185h30m-30 0v-25m616 25h-30m30 0v-25" fill="none" stroke="#a6b78a" stroke-width="2"/>
-    <g transform="translate(345 55)" fill="#789963"><ellipse cy="11" rx="23" ry="16"/><circle cx="-13" r="10"/><circle cx="13" r="10"/><circle cx="-13" r="3" fill="#f8f5de"/><circle cx="13" r="3" fill="#f8f5de"/><path d="M-8 13q8 7 16 0" stroke="#f8f5de" stroke-width="2" fill="none"/></g>
-    <text x="345" y="124" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="39" font-weight="bold" fill="#365941">Cinema do Brejo</text>
-    <text x="345" y="159" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="19" fill="#617a50">Escolha um lugar e fique à vontade</text>
-    <text x="345" y="188" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="10" letter-spacing="4" fill="#87956d">BOA COMPANHIA · CÉU ABERTO</text>`);
+    <rect x="3" y="3" width="${width - 6}" height="${height - 6}" rx="18" fill="#476451" stroke="#2e4b3c" stroke-width="6"/>
+    <rect x="16" y="15" width="${innerWidth}" height="${innerHeight}" rx="7" fill="url(#screen)"/>
+    <path d="M37 39h30m-30 0v25M${width - 37} 39h-30m30 0v25M37 ${height - 40}h30m-30 0v-25M${width - 37} ${height - 40}h-30m30 0v-25" fill="none" stroke="#a6b78a" stroke-width="2"/>
+    <g transform="translate(${center} 82)" fill="#789963"><ellipse cy="11" rx="23" ry="16"/><circle cx="-13" r="10"/><circle cx="13" r="10"/><circle cx="-13" r="3" fill="#f8f5de"/><circle cx="13" r="3" fill="#f8f5de"/><path d="M-8 13q8 7 16 0" stroke="#f8f5de" stroke-width="2" fill="none"/></g>
+    <text x="${center}" y="170" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="39" font-weight="bold" fill="#365941">Cinema do Brejo</text>
+    <text x="${center}" y="211" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="19" fill="#617a50">Escolha um lugar e fique à vontade</text>
+    <text x="${center}" y="246" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="10" letter-spacing="4" fill="#87956d">BOA COMPANHIA · CÉU ABERTO</text>`);
 }
 
 export function cinemaChairSvg(back = false) {

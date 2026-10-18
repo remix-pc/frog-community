@@ -2,10 +2,11 @@ import type { MapId, Point } from './protocol.js';
 
 export const CINEMA_SEATS = Array.from({ length: 24 }, (_, index) => {
   const row = Math.floor(index / 6), column = index % 6;
-  const x = [450, 540, 630, 800, 890, 980][column], y = 350 + row * 85;
+  const x = [450, 540, 630, 800, 890, 980][column], y = 520 + row * 60;
   return { id: `seat-${index + 1}`, x, y, access: { x, y: y + 32 } };
 });
-export const CINEMA_SCREEN = { x: 720, y: 270, width: 690, height: 225 };
+export const CINEMA_SCREEN = { x: 720, y: 450, width: 690, height: 450 };
+export const CINEMA_SCREEN_VIEW = { x: 391, y: 15, width: 658, height: 420 };
 export const CINEMA_TREES = [
   { x: 110, y: 200, scale: 1.05 }, { x: 220, y: 170, scale: 0.8 },
   { x: 1130, y: 220, scale: 0.95 }, { x: 1140, y: 510, scale: 1 },

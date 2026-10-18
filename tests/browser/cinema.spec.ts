@@ -21,7 +21,7 @@ async function clickWorld(page: Page, x: number, y: number) {
   await canvas.click({ position: { x: x / 1200 * bounds.width, y: y / 800 * bounds.height } });
 }
 async function cinema(page: Page) {
-  await clickWorld(page, PORTALS.plaza.point.x, PORTALS.plaza.point.y - 30);
+  await clickWorld(page, PORTALS.plaza.point.x, PORTALS.plaza.point.y);
   await expect(page.locator('canvas')).toHaveAttribute('data-map-id', 'cinema', { timeout: 10000 });
   await expect(page.getByRole('heading', { name: 'Cinema do Brejo' })).toBeVisible();
 }
@@ -30,6 +30,8 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
   test(`cinema, assentos e conversa local ${viewport.width}×${viewport.height}`, async ({ browser, cinemaGame }, info) => {
     const ca = await browser.newContext({ viewport }), cb = await browser.newContext({ viewport });
     const a = await ca.newPage(), b = await cb.newPage(), errors: string[] = [];
+    await a.route('https://player.twitch.tv/**', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Player simulado</title>' }));
+    await b.route('https://player.twitch.tv/**', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Player simulado</title>' }));
     a.on('pageerror', e => errors.push(e.message)); b.on('pageerror', e => errors.push(e.message));
     try {
       await enter(a, cinemaGame.url, 'Cine Sapo'); await enter(b, cinemaGame.url, 'Cine Amiga');
@@ -39,6 +41,19 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
       await cinema(a);
       await expect(a.locator('#people-count')).toHaveText('1'); await expect(b.locator('#people-count')).toHaveText('1');
       await expect(a.locator('.message p')).toHaveCount(0);
+      await expect(a.locator('#twitch-player-frame')).toBeVisible();
+      const twitchPlayer = a.locator('#twitch-player-frame iframe');
+      await expect(twitchPlayer).toHaveAttribute('title', 'Live da Twitch: magunna12022');
+      const twitchUrl = await twitchPlayer.getAttribute('src');
+      expect(twitchUrl).toBeTruthy();
+      const twitchParams = new URL(twitchUrl!).searchParams;
+      expect(twitchParams.get('channel')).toBe('magunna12022');
+      expect(twitchParams.get('parent')).toBe('127.0.0.1');
+      expect(twitchParams.get('autoplay')).toBe('true');
+      expect(twitchParams.get('muted')).toBe('true');
+      const playerBounds = (await twitchPlayer.boundingBox())!;
+      expect(playerBounds.width).toBeGreaterThanOrEqual(400);
+      expect(playerBounds.height).toBeGreaterThanOrEqual(300);
       await a.getByLabel('Mensagem para o cinema').fill('Bem-vindos ao cinema');
       await a.getByLabel('Mensagem para o cinema').press('Enter');
       await expect(a.locator('.message p')).toHaveText('Bem-vindos ao cinema');
@@ -67,8 +82,10 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
       await expect(a.locator('#arcade-invite')).toBeHidden(); await expect(a.locator('#firefly-invite')).toBeHidden();
       await clickWorld(a, 720, 680);
       await expect(a.locator('canvas')).toHaveAttribute('data-seat-id', '');
-      await clickWorld(a, PORTALS.cinema.point.x, PORTALS.cinema.point.y - 30);
+      await clickWorld(a, PORTALS.cinema.point.x, PORTALS.cinema.point.y);
       await expect(a.locator('canvas')).toHaveAttribute('data-map-id', 'plaza', { timeout: 8000 });
+      await expect(a.locator('#twitch-player-frame')).toBeHidden();
+      await expect(a.locator('#twitch-player-frame iframe')).not.toHaveAttribute('src', /player\.twitch\.tv/);
       await expect(a.locator('.message p')).toHaveText('Ficou na praça');
       await expect(b.locator('#people-count')).toHaveText('1');
       expect(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight)).toBe(true);

@@ -2,6 +2,7 @@ import { io, type Socket } from 'socket.io-client';
 import { COLORS, DEFAULT_APPEARANCE, GLASSES, HATS, OUTFITS, parseProfile, type Appearance, type ChatMessage, type ClientEvents, type MapId, type Player, type Profile, type ServerEvents, type WorldState } from '../shared/protocol';
 import { dataSvg, frogSvg } from './art';
 import { createPlaza } from './scene';
+import { createTwitchScreen } from './twitch-screen';
 import { ArcadeUI } from './arcade';
 import { FireflyUI } from './firefly';
 import { isNightInSaoPaulo } from './time';
@@ -59,6 +60,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 function el<T extends HTMLElement = HTMLElement>(id: string) { return document.getElementById(id)! as T; }
 const socket: Socket<ServerEvents, ClientEvents> = io({ autoConnect: true, reconnection: true });
 const { scene } = createPlaza(el('world'));
+const twitchScreen = createTwitchScreen(el('world'));
 function updateTimeOfDay() {
   const night = isNightInSaoPaulo();
   scene.setNight(night);
@@ -236,6 +238,7 @@ function applyWorld(state: WorldState) {
   currentMap = state.mapId;
   players = state.players; messages = state.messages;
   scene.setMap(currentMap); scene.clearBubbles(); scene.setPlayers(players);
+  twitchScreen.setMap(currentMap);
   arcade.reset(); firefly.reset();
   const cinema = currentMap === 'cinema', name = cinema ? 'Cinema do Brejo' : 'Praça do Brejo';
   const place = cinema ? 'no cinema' : 'na praça';
